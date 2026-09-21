@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agenda V1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Paleta para deuteranopia: só azul e cinza-escuro/grafite (sem vermelho, verde ou amarelo).
+   Nenhuma informação depende só da cor: prioridade = estrela preenchida + etiqueta + borda grossa;
+   concluída = ícone de check + texto riscado + etiqueta. */
+:root{
+  --bg:#f1f5f9; --sup:#ffffff; --sup2:#f6f7fa; --txt:#161a21; --mut:#5a6372; --bor:#dde2ea;
+  --acc:#2563eb; --acc-txt:#ffffff; --acc-soft:#dbe7fd;
+  --nav:#1e3a8a; --nav-txt:#ffffff; --nav-mut:#c7d2fe; --nav-bor:rgba(255,255,255,.35); --nav-hov:rgba(255,255,255,.12); --tit:#1e3a8a; --cab:#f1f4f9;
+  --prio:#2b3440; --prio-dk:#2b3440; --prio-soft:#e4e8ee; --prio-txt:#1b2230;
+  --perigo:#1b2230; --perigo-soft:#e4e8ee;
+  --zebra:#f5f7fa; --hov:#dde9f5;
+  --sombra:0 1px 2px rgba(16,24,40,.05),0 4px 14px rgba(16,24,40,.06); --r:14px;
+}
+[data-theme="dark"]{
+  --bg:#0e1116; --sup:#171b22; --sup2:#1c2129; --txt:#e8eaef; --mut:#9ca5b4; --bor:#2b323d;
+  --acc:#60a5fa; --acc-txt:#0b1220; --acc-soft:#16294a;
+  --nav:#172554; --nav-txt:#ffffff; --nav-mut:#a5b4fc; --nav-bor:rgba(255,255,255,.25); --nav-hov:rgba(255,255,255,.08); --tit:#93c5fd; --cab:#1c2230;
+  --prio:#e8eaef; --prio-dk:#e8eaef; --prio-soft:#2c3440; --prio-txt:#ffffff;
+  --perigo:#e8eaef; --perigo-soft:#2c3440;
+  --zebra:#20262f; --hov:#1b3040;
+  --sombra:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased;transition:background .2s,color .2s}
+[hidden]{display:none!important}
+.ic{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+button{font:inherit;color:inherit;cursor:pointer}
+input,select,textarea{font:inherit;color:var(--txt);background:var(--sup);border:1.5px solid var(--bor);border-radius:10px;padding:10px 12px;outline:none;transition:border-color .15s,box-shadow .15s;max-width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-soft)}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.mut{color:var(--mut)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+.btn{display:inline-flex;align-items:center;gap:8px;border:1.5px solid transparent;border-radius:10px;padding:10px 16px;font-weight:600;white-space:nowrap;transition:filter .15s,background .15s}
+.btn-prim{background:var(--acc);color:var(--acc-txt)}
+.btn-prim:hover{filter:brightness(1.08)}
+.btn-sec{background:var(--sup);border-color:var(--bor)}
+.btn-sec:hover{border-color:var(--acc)}
+.btn-perigo{background:var(--perigo);color:var(--sup)}
+.btn-bloco{width:100%;justify-content:center}
+.btn:disabled{opacity:.6;cursor:wait}
+.btn-ic{width:40px;height:40px;display:inline-grid;place-items:center;border-radius:10px;border:1.5px solid var(--bor);background:var(--sup);transition:all .15s}
+.btn-ic:hover{border-color:var(--acc);color:var(--acc)}
+.btn-ic[aria-pressed="true"]{background:var(--acc);color:var(--acc-txt);border-color:var(--acc)}
+
+/* Login */
+.login{min-height:100vh;display:grid;place-items:center;padding:16px}
+.login-card{width:100%;max-width:360px;background:var(--sup);border:1px solid var(--bor);border-radius:20px;padding:32px 28px;box-shadow:var(--sombra);display:flex;flex-direction:column;gap:14px;text-align:center}
+.login-card h1{margin:0;font-size:26px;letter-spacing:-.02em}
+.login-card p{margin:0}
+.logo{width:56px;height:56px;border-radius:16px;background:var(--nav);color:var(--acc-txt);display:grid;place-items:center;margin:0 auto}
+.logo .ic{width:28px;height:28px}
+.erro{color:var(--perigo);min-height:1.3em;font-weight:600;font-size:14px}
+.box-url{display:flex;flex-direction:column;gap:6px;text-align:left}
+.box-url input{font-size:13px}
+.link-url{background:none;border:none;color:var(--acc);font-weight:600;font-size:13px;text-decoration:underline;text-underline-offset:3px;padding:2px}
+
+/* Topo */
+.topo{position:sticky;top:0;z-index:20;background:var(--nav);color:var(--nav-txt);box-shadow:0 2px 8px rgba(15,23,42,.18)}
+.topo-in{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 24px;flex-wrap:wrap}
+.marca h1{margin:0;font-size:22px;letter-spacing:-.01em;color:var(--nav-txt)}
+.versao{font-size:.7em;font-weight:700;opacity:.8;letter-spacing:.02em}
+.topo .mut{color:var(--nav-mut)}
+.topo .btn-ic{background:transparent;border-color:var(--nav-bor);color:var(--nav-txt)}
+.topo .btn-ic:hover{background:var(--nav-hov);border-color:var(--nav-txt);color:var(--nav-txt)}
+.topo .btn-ic[aria-pressed="true"]{background:var(--nav-txt);color:var(--nav);border-color:var(--nav-txt)}
+.topo .sync{color:var(--nav-mut)}
+.topo .sync.erro{color:var(--nav-txt);background:rgba(255,255,255,.18);padding:3px 10px;border-radius:999px}
+.topo .sync.salvando::before{border-color:var(--nav-txt);border-right-color:transparent}
+.marca #hoje{font-size:13px}
+.acoes-topo{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sync{font-size:12.5px;color:var(--mut);display:inline-flex;align-items:center;gap:6px;min-width:90px;justify-content:flex-end}
+.sync.salvando::before{content:"";width:10px;height:10px;border:2px solid var(--acc);border-right-color:transparent;border-radius:50%;animation:gira .7s linear infinite}
+.sync.erro{color:var(--perigo);font-weight:700}
+@keyframes gira{to{transform:rotate(360deg)}}
+
+/* Abas */
+.abas{display:flex;gap:2px;padding:0 24px;overflow-x:auto;max-width:1100px;margin:0 auto;scrollbar-width:thin}
+.aba{display:inline-flex;align-items:center;gap:8px;padding:14px 16px 12px;border:none;border-bottom:3px solid transparent;background:none;color:var(--nav-mut);font-weight:700;font-size:14px;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;transition:color .15s,background .15s}
+.aba:hover{color:var(--nav-txt);background:var(--nav-hov)}
+.aba.ativa{color:var(--nav-txt);border-bottom-color:var(--nav-txt)}
+.aba .qt{font-size:11.5px;padding:1px 7px;border-radius:999px;background:rgba(255,255,255,.16);color:inherit;font-weight:700;letter-spacing:0}
+.aba.ativa .qt{background:var(--nav-txt);color:var(--nav)}
+.aba-prio .ic{fill:currentColor;stroke:currentColor}
+.aba-nova{color:var(--nav-mut);font-weight:600}
+
+main.conteudo{max-width:1100px;margin:0 auto;padding:22px 24px 80px}
+
+/* Nova tarefa */
+.nova{background:var(--sup);border:1px solid var(--bor);border-radius:var(--r);padding:14px;box-shadow:var(--sombra);display:flex;flex-direction:column;gap:10px}
+.nova-linha{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+#novoTitulo{flex:1 1 280px}
+.nova textarea{display:none;resize:vertical;min-height:70px}
+.nova.com-detalhe textarea{display:block}
+.btn-det{display:inline-flex;align-items:center;gap:6px;padding:9px 12px;border:1.5px solid var(--bor);border-radius:10px;font-weight:600;background:var(--sup)}
+.btn-det:hover{border-color:var(--acc)}
+.btn-det[aria-pressed="true"]{background:var(--acc-soft);border-color:var(--acc);color:var(--txt)}
+.btn-det.tem-texto span::after{content:" •";font-weight:800} /* há texto nos detalhes, mesmo com o campo fechado */
+.btn-det .chev{width:15px;height:15px;transition:transform .2s}
+.btn-det[aria-pressed="true"] .chev{transform:rotate(180deg)}
+.chk-prio{position:relative;display:inline-flex;align-items:center;gap:6px;padding:9px 12px;border:1.5px solid var(--bor);border-radius:10px;cursor:pointer;font-weight:600;user-select:none;background:var(--sup)}
+.chk-prio input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.chk-prio:has(input:checked){background:var(--prio-soft);border-color:var(--prio);color:var(--prio-txt)}
+.chk-prio:has(input:checked) .ic{fill:var(--prio);stroke:var(--prio-dk)}
+.chk-prio:has(input:focus-visible){outline:3px solid var(--acc);outline-offset:2px}
+
+/* Painel da lista */
+.painel{background:var(--sup);border:1px solid var(--bor);border-radius:14px;padding:20px 24px 24px;margin-top:20px;box-shadow:var(--sombra)}
+.painel .barra-lista{margin:0 0 16px}
+.titulo-aba h2{color:var(--tit)}
+.barra-lista{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:24px 0 12px;flex-wrap:wrap}
+.titulo-aba h2{margin:0;font-size:20px;display:flex;align-items:center;gap:8px;letter-spacing:-.01em}
+.titulo-aba h2 .ic{width:22px;height:22px;fill:currentColor;stroke:currentColor}
+.titulo-aba #resumo{font-size:13px}
+.barra-dir{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.busca{position:relative}
+.busca .ic{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--mut);width:16px;height:16px}
+.busca input{padding-left:34px;width:220px}
+.btn-mini{border:1.5px solid var(--bor);background:var(--sup);border-radius:9px;padding:8px 11px;font-size:13px;font-weight:600;display:inline-flex;gap:6px;align-items:center}
+.btn-mini .ic{width:15px;height:15px}
+.btn-mini:hover{border-color:var(--acc);color:var(--acc)}
+.btn-mini.perigo:hover{border-color:var(--perigo);color:var(--perigo);background:var(--perigo-soft)}
+
+/* Lista compacta (estilo caixa de entrada) */
+.protegido{position:relative;min-height:140px}
+#lista,#concluidasWrap{transition:filter .25s,opacity .25s}
+.lista-box{background:var(--sup);border:1px solid var(--bor);border-radius:10px;overflow:hidden}
+.lista-cab{display:flex;align-items:center;gap:10px;padding:10px 10px 10px 9px;background:var(--cab);border-bottom:1px solid var(--bor);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+.lista-cab .c-estrela{width:27px;flex:none}
+.lista-cab .c-tarefa{flex:1}
+.lista-cab .c-data{min-width:100px;text-align:right;flex:none}
+.card{display:flex;align-items:center;gap:10px;min-height:40px;padding:0 10px 0 6px;border-bottom:1px solid var(--bor);border-left:3px solid transparent;cursor:pointer;transition:background .12s}
+.lista-box .card:last-child,.lista-box .item:last-child .card{border-bottom:none}
+.lista-box .item:nth-child(odd) .card{background:var(--zebra)} /* 1º filho é o cabeçalho */
+.lista-box .item .card:hover{background:var(--hov);box-shadow:inset 0 -1px 0 var(--bor),0 1px 3px rgba(16,24,40,.08);position:relative;z-index:1}
+.card.is-prio{border-left-color:var(--prio)}
+.card.is-done .ic-done{display:inline-block}
+@keyframes entra{from{opacity:0;transform:translateY(4px)}}
+.prio-chk{position:relative;cursor:pointer;padding:4px;flex:none;display:grid;place-items:center}
+.prio-chk input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer;z-index:1}
+.estrela{display:grid;place-items:center;border-radius:6px}
+.estrela .ic{width:19px;height:19px;color:var(--mut);transition:transform .15s}
+.prio-chk:hover .ic{transform:scale(1.15)}
+.prio-chk input:checked + .estrela .ic{fill:var(--prio);color:var(--prio-dk)}
+.prio-chk input:focus-visible + .estrela{outline:3px solid var(--acc);outline-offset:2px}
+.card-linha{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}
+.card-titulo{font-weight:400;color:var(--txt)}
+.card.is-prio .card-titulo{font-weight:700}
+.card.is-done .card-titulo{text-decoration:line-through;text-decoration-thickness:1.5px;font-weight:400;color:var(--mut)}
+.card-desc{color:var(--mut)}
+.ic-done{display:none;width:15px;height:15px;vertical-align:-2px;margin-right:4px;color:var(--acc);stroke-width:3}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:1px 8px;border-radius:6px;background:var(--sup2);border:1px solid var(--bor);font-weight:600;font-size:12px;color:var(--mut);flex:none;white-space:nowrap}
+.tag .ic{width:12px;height:12px}
+.tag-prio{background:var(--prio-soft);border-color:var(--prio);color:var(--prio-txt)}
+.tag-prio .ic{fill:var(--prio);stroke:var(--prio-dk)}
+.tag-done{background:var(--acc-soft);border-color:var(--acc);color:var(--txt)}
+.card-data{flex:none;font-size:12.5px;font-weight:600;color:var(--mut);min-width:100px;text-align:right}
+.card-acoes{display:none;gap:2px;flex:none}
+.card:hover .card-acoes,.card:focus-within .card-acoes{display:flex}
+.card:hover .card-data,.card:focus-within .card-data{display:none}
+.btn-acao{width:32px;height:32px;display:grid;place-items:center;border-radius:50%;border:none;background:none;color:var(--mut);transition:background .12s,color .12s}
+.btn-acao .ic{width:17px;height:17px}
+.btn-acao:hover{background:var(--acc-soft);color:var(--acc)}
+.btn-acao.acao-perigo:hover{background:var(--perigo-soft);color:var(--perigo)}
+.detalhe{display:none;padding:4px 16px 12px 46px;border-bottom:1px solid var(--bor);background:var(--hov);font-size:13.5px}
+.item.aberto .detalhe{display:block}
+.lista-box .item.aberto .card{border-bottom-color:transparent;background:var(--hov)}
+.detalhe-desc{white-space:pre-wrap;overflow-wrap:anywhere;margin-bottom:8px}
+.detalhe-meta{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;color:var(--mut);font-size:12.5px}
+.vazio{text-align:center;padding:28px 16px;color:var(--mut);border:1.5px dashed var(--bor);border-radius:12px}
+.toggle-done{margin:18px 0 8px;background:none;border:none;display:inline-flex;align-items:center;gap:6px;font-weight:700;color:var(--mut);padding:6px 2px}
+.toggle-done .ic{transition:transform .2s;transform:rotate(-90deg)}
+.toggle-done[aria-expanded="true"] .ic{transform:none}
+@media (hover:none){
+  .card-acoes{display:flex}
+  .card-data{display:none}
+}
+
+/* Modo privado */
+.veu{display:none}
+body.privado .protegido:not(.revelado) #lista,
+body.privado .protegido:not(.revelado) #concluidasWrap{filter:blur(6px);opacity:.75;pointer-events:none;user-select:none}
+body.privado .protegido:not(.revelado) .veu{display:flex;position:absolute;inset:0;z-index:2;justify-content:center;align-items:flex-start;padding-top:44px;pointer-events:none}
+.veu span{display:inline-flex;align-items:center;gap:8px;background:var(--sup);border:1px solid var(--bor);padding:9px 16px;border-radius:999px;box-shadow:var(--sombra);color:var(--mut);font-weight:600;font-size:14px}
+
+/* Modal e avisos */
+.modal-fundo{position:fixed;inset:0;background:rgba(10,14,20,.55);backdrop-filter:blur(3px);display:grid;place-items:center;padding:16px;z-index:50}
+.modal{background:var(--sup);border:1px solid var(--bor);border-radius:18px;width:100%;max-width:480px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:entra .2s}
+.modal h3{margin:0 0 14px;font-size:18px}
+.modal-corpo{display:flex;flex-direction:column;gap:12px}
+.modal-corpo p{margin:0}
+.campo{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--mut)}
+.modal-botoes{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
+#toasts{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;z-index:60;align-items:center;width:calc(100% - 32px);max-width:420px}
+.toast{background:var(--txt);color:var(--bg);padding:11px 14px;border-radius:12px;box-shadow:var(--sombra);display:flex;align-items:center;gap:12px;font-weight:500;animation:entra .2s;width:100%}
+.toast.erro{background:var(--sup);color:var(--txt);border:2px solid var(--txt);font-weight:700}
+.toast button{margin-left:auto;background:none;border:1.5px solid currentColor;border-radius:8px;padding:4px 10px;font-weight:700;color:inherit}
+
+@media (max-width:680px){
+  .topo-in,.abas,main.conteudo{padding-left:16px;padding-right:16px}
+  .abas{padding-left:8px;padding-right:8px}
+  .aba{padding:12px 10px 10px;font-size:13px}
+  .painel{padding:14px 12px 16px}
+  .topo-in{padding-top:10px;padding-bottom:10px;gap:8px}
+  .acoes-topo{gap:4px;width:100%;justify-content:space-between}
+  .sync{min-width:0;order:9;flex:1 1 100%;justify-content:flex-start}
+  .sync:empty{display:none}
+  .btn-ic{width:38px;height:38px}
+  .nova{padding:10px}
+  #novoTitulo{flex:1 1 100%}
+  #novaCat{flex:1 1 0;min-width:0}
+  .chk-prio{flex:none;padding:9px 10px}
+  .chk-prio span,.btn-det span{display:none}
+  .btn-det{flex:none;padding:9px 10px}
+  .nova-linha .btn{flex:none;padding:10px 14px}
+  .busca,.barra-dir{flex:1 1 100%}
+  .busca input{width:100%}
+  .card .tag-cat,.card .card-desc{display:none}
+  .detalhe{padding-left:16px}
+}
+</style>
+</head>
+<body>
+
+<!-- Ícones -->
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-eyeoff" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M1 1l22 22"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><path d="M12 15V3"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><path d="M12 3v12"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="5.5"/><path d="M21 2l-9.6 9.6M15.5 7.5l3 3L22 7l-3-3"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></symbol>
+  <symbol id="i-notes" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+</svg>
+
+<!-- LOGIN -->
+<div id="login" class="login">
+  <form class="login-card" id="loginForm" autocomplete="off">
+    <div class="logo"><svg class="ic"><use href="#i-cal"/></svg></div>
+    <h1>Agenda <span class="versao" data-versao></span></h1>
+    <p class="mut">Digite sua senha para acessar</p>
+    <div id="boxUrl" class="box-url">
+      <label class="campo" for="urlApi">URL do Apps Script (termina em /exec)</label>
+      <input type="url" id="urlApi" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off" spellcheck="false">
+    </div>
+    <input type="password" id="senha" placeholder="Senha" autocomplete="current-password" required>
+    <button class="btn btn-prim btn-bloco" id="btnEntrar" type="submit">Entrar</button>
+    <p id="loginErro" class="erro" role="alert"></p>
+    <button type="button" class="link-url" id="btnMostrarUrl" hidden>Alterar URL da planilha</button>
+  </form>
+</div>
+
+<!-- APP -->
+<div id="app" hidden>
+  <header class="topo">
+    <div class="topo-in">
+      <div class="marca">
+        <h1>Agenda <span class="versao" data-versao></span></h1>
+        <span id="hoje" class="mut"></span>
+      </div>
+      <div class="acoes-topo">
+        <span id="sync" class="sync" aria-live="polite"></span>
+        <button class="btn-ic" id="btnPrivado" type="button" aria-pressed="false" title="Modo privado — atalho P"></button>
+        <button class="btn-ic" id="btnTema" type="button" title="Alternar claro / escuro"></button>
+        <button class="btn-ic" id="btnBackup" type="button" title="Backup (baixa um arquivo)"><svg class="ic"><use href="#i-down"/></svg></button>
+        <button class="btn-ic" id="btnRestaurar" type="button" title="Restaurar backup"><svg class="ic"><use href="#i-up"/></svg></button>
+        <button class="btn-ic" id="btnSenha" type="button" title="Trocar senha"><svg class="ic"><use href="#i-key"/></svg></button>
+        <button class="btn-ic" id="btnBloquear" type="button" title="Bloquear agenda"><svg class="ic"><use href="#i-lock"/></svg></button>
+        <input type="file" id="arqRestaurar" accept=".json,application/json" hidden>
+      </div>
+    </div>
+    <nav class="abas" id="abas" aria-label="Categorias"></nav>
+  </header>
+
+  <main class="conteudo">
+    <form class="nova" id="formNova">
+      <div class="nova-linha">
+        <input id="novoTitulo" placeholder="Nova tarefa…  (atalho N)" maxlength="300" autocomplete="off" aria-label="Título da nova tarefa">
+        <select id="novaCat" aria-label="Categoria"></select>
+        <button class="btn-det" id="btnDetalhe" type="button" aria-pressed="false" aria-controls="novaDesc" title="Mostrar campo de detalhes"><svg class="ic"><use href="#i-notes"/></svg><span>Detalhes</span><svg class="ic chev"><use href="#i-chev"/></svg></button>
+        <label class="chk-prio"><input type="checkbox" id="novaPrio"><svg class="ic"><use href="#i-star"/></svg><span>Prioritária</span></label>
+        <button class="btn btn-prim" type="submit"><svg class="ic"><use href="#i-plus"/></svg>Adicionar</button>
+      </div>
+      <textarea id="novaDesc" placeholder="Detalhes (opcional) — Ctrl+Enter adiciona" rows="1"></textarea>
+    </form>
+
+    <section class="painel">
+    <div class="barra-lista">
+      <div class="titulo-aba">
+        <h2 id="tituloAba"></h2>
+        <span id="resumo" class="mut"></span>
+      </div>
+      <div class="barra-dir">
+        <div class="busca"><svg class="ic"><use href="#i-search"/></svg><input id="busca" placeholder="Buscar  ( / )" aria-label="Buscar tarefas"></div>
+        <span id="gerCat" style="display:flex;gap:8px"></span>
+      </div>
+    </div>
+
+    <section id="protegido" class="protegido">
+      <div class="veu"><span><svg class="ic"><use href="#i-eyeoff"/></svg>Conteúdo oculto — passe o mouse ou toque para ver</span></div>
+      <div id="lista"></div>
+      <div id="concluidasWrap"></div>
+    </section>
+    </section>
+  </main>
+</div>
+
+<!-- MODAL -->
+<div id="modal" class="modal-fundo" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitulo">
+    <h3 id="modalTitulo"></h3>
+    <div class="modal-corpo" id="modalCorpo"></div>
+    <div class="modal-botoes">
+      <button class="btn btn-sec" id="modalCancel" type="button">Cancelar</button>
+      <button class="btn btn-prim" id="modalOk" type="button">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+/* ============================================================
+   URL DO APPS SCRIPT
+   É informada na tela de login. É o ÚNICO item guardado no navegador
+   (localStorage), para não precisar colar a URL toda vez.
+   Nenhuma tarefa, categoria ou configuração fica no navegador: tudo vai para o Sheets.
+   ============================================================ */
+/* ============================================================
+   VERSÃO — atualize a cada alteração publicada
+   V1 (21/09/2026): versão inicial — categorias em abas, aba Prioritárias automática,
+   concluir/editar/excluir, modo privado, claro/escuro, backup/restauração,
+   lista compacta, tema Locações, detalhes recolhíveis.
+   ============================================================ */
+const VERSAO = 'V1';
+const VERSAO_DATA = '21/09/2026';
+document.querySelectorAll('[data-versao]').forEach(el => { el.textContent = VERSAO; el.title = 'Versão ' + VERSAO + ' — ' + VERSAO_DATA; });
+
+const CHAVE_URL = 'agenda_api_url';
+const RE_URL = /^https:\/\/script\.google(usercontent)?\.com\/.+\/exec$/;
+function lerUrl() { try { return localStorage.getItem(CHAVE_URL) || ''; } catch (e) { return ''; } }
+function gravarUrl(u) { try { localStorage.setItem(CHAVE_URL, u); } catch (e) {} }
+let API_URL = lerUrl();
+
+/* ---------------- Estado (só em memória) ---------------- */
+const PRIO = '__prio';
+let SENHA = null;
+const S = { categorias: [], tarefas: [], config: {}, aba: PRIO, busca: '', verConcluidas: false, privado: false, abertas: new Set() };
+
+const $ = s => document.querySelector(s);
+const ic = n => `<svg class="ic"><use href="#i-${n}"/></svg>`;
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const novoId = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const achar = id => S.tarefas.find(t => t.id === id);
+const nomeCat = id => (S.categorias.find(c => c.id === id) || {}).nome || '—';
+
+/* ---------------- Datas ---------------- */
+function agoraLocal() {
+  const d = new Date(), p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+function parseDt(s) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/.exec(s || '');
+  return m ? new Date(+m[1], m[2] - 1, +m[3], +m[4], +m[5]) : null;
+}
+function fmtRel(s) {
+  const d = parseDt(s); if (!d) return '';
+  const h = new Date(); h.setHours(0, 0, 0, 0);
+  const dia = new Date(d); dia.setHours(0, 0, 0, 0);
+  const diff = Math.round((h - dia) / 864e5);
+  const hm = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  if (diff === 0) return 'hoje às ' + hm;
+  if (diff === 1) return 'ontem às ' + hm;
+  return 'em ' + d.toLocaleDateString('pt-BR') + ' às ' + hm;
+}
+
+/* ---------------- Comunicação com o Sheets ---------------- */
+async function api(acao, dados = {}) {
+  if (!API_URL) throw new Error('Cole a URL do Apps Script.');
+  let r;
+  try {
+    r = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ acao, dados, senha: SENHA })
+    });
+  } catch (e) {
+    throw new Error('Sem conexão com a planilha. Verifique a internet.');
+  }
+  if (!r.ok) throw new Error('Falha de conexão com a planilha (' + r.status + ').');
+  let j;
+  try { j = await r.json(); } catch (e) { throw new Error('Resposta inválida do servidor. Confira a implantação do Apps Script.'); }
+  if (!j.ok) {
+    if (j.erro === 'SENHA') {
+      if (!$('#app').hidden) bloquear('Senha alterada ou inválida. Entre novamente.');
+      throw new Error('Senha incorreta.');
+    }
+    throw new Error(j.erro || 'Erro desconhecido.');
+  }
+  return j.dados;
+}
+
+let pend = 0, syncTmr;
+function sync(delta, erro) {
+  pend = Math.max(0, pend + delta);
+  const el = $('#sync'); clearTimeout(syncTmr);
+  if (erro) { el.className = 'sync erro'; el.textContent = 'Erro ao salvar'; return; }
+  if (pend > 0) { el.className = 'sync salvando'; el.textContent = 'Salvando…'; }
+  else { el.className = 'sync'; el.textContent = 'Salvo'; syncTmr = setTimeout(() => { el.textContent = ''; }, 2500); }
+}
+
+/* Atualização otimista: aplica na tela na hora e desfaz se o servidor recusar */
+async function executar(acao, dados, aplicar, desfazer) {
+  aplicar(); render(); sync(+1);
+  try {
+    const r = await api(acao, dados);
+    sync(-1);
+    return r;
+  } catch (e) {
+    sync(-1, true); desfazer(); render(); toast(e.message, 'erro');
+    throw e;
+  }
+}
+function substituir(r) {
+  if (!r || !r.id) return;
+  const i = S.tarefas.findIndex(x => x.id === r.id);
+  if (i >= 0) { S.tarefas[i] = r; render(); }
+}
+
+/* ---------------- Login / bloqueio ---------------- */
+$('#loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const b = $('#btnEntrar'); $('#loginErro').textContent = '';
+  const urlAnterior = API_URL;
+  if (!$('#boxUrl').hidden) {
+    const u = $('#urlApi').value.trim();
+    if (!u) { $('#loginErro').textContent = 'Cole a URL do Apps Script.'; return $('#urlApi').focus(); }
+    if (!RE_URL.test(u)) {
+      $('#loginErro').textContent = /\/dev$/.test(u) ? 'Essa URL termina em /dev. Use a URL da implantação, que termina em /exec.' : 'URL inválida. Ela começa com https://script.google.com/ e termina em /exec.';
+      return $('#urlApi').focus();
+    }
+    API_URL = u;
+  }
+  SENHA = $('#senha').value;
+  b.disabled = true; b.textContent = 'Entrando…';
+  try {
+    const d = await api('carregar');
+    gravarUrl(API_URL);          // só grava a URL depois que a conexão funcionou
+    $('#senha').value = '';
+    mostrarCampoUrl(false);
+    $('#login').hidden = true; $('#app').hidden = false;
+    $('#hoje').textContent = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    aplicarCarga(d);
+    $('#novoTitulo').focus();
+  } catch (err) {
+    SENHA = null;
+    if (!$('#boxUrl').hidden) API_URL = urlAnterior;
+    $('#loginErro').textContent = err.message === 'Senha incorreta.' ? err.message :
+      err.message + ' Confira também a URL do Apps Script.';
+    if (err.message !== 'Senha incorreta.') mostrarCampoUrl(true);
+  } finally {
+    b.disabled = false; b.textContent = 'Entrar';
+  }
+});
+
+function mostrarCampoUrl(v) {
+  $('#boxUrl').hidden = !v;
+  $('#btnMostrarUrl').hidden = v || !API_URL;
+  if (v) $('#urlApi').value = $('#urlApi').value || API_URL;
+}
+$('#btnMostrarUrl').onclick = () => { mostrarCampoUrl(true); $('#urlApi').focus(); $('#urlApi').select(); };
+mostrarCampoUrl(!API_URL);
+setTimeout(() => (API_URL ? $('#senha') : $('#urlApi')).focus(), 50);
+
+function bloquear(msg) {
+  SENHA = null;
+  S.categorias = []; S.tarefas = []; S.busca = ''; S.abertas.clear();
+  $('#lista').innerHTML = ''; $('#concluidasWrap').innerHTML = ''; $('#abas').innerHTML = '';
+  $('#busca').value = '';
+  $('#modal').hidden = true;
+  $('#app').hidden = true; $('#login').hidden = false;
+  $('#loginErro').textContent = msg || '';
+  mostrarCampoUrl(false);
+  $('#senha').focus();
+}
+$('#btnBloquear').onclick = () => bloquear();
+
+function aplicarCarga(d) {
+  S.categorias = d.categorias || [];
+  S.tarefas = d.tarefas || [];
+  S.config = d.config || {};
+  aplicarTema(S.config.tema || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+  S.privado = S.config.privado === '1';
+  aplicarPrivado();
+  if (S.aba !== PRIO && !S.categorias.some(c => c.id === S.aba)) S.aba = PRIO;
+  render();
+}
+
+/* ---------------- Renderização ---------------- */
+function tarefasDaAba(aba) {
+  return S.tarefas.filter(t => aba === PRIO ? t.prioritaria : t.categoriaId === aba);
+}
+
+function render() { renderAbas(); renderSelect(); renderCabecalho(); renderLista(); }
+
+function renderAbas() {
+  const qt = aba => tarefasDaAba(aba).filter(t => !t.concluida).length;
+  let h = `<button class="aba aba-prio ${S.aba === PRIO ? 'ativa' : ''}" data-aba="${PRIO}" type="button">${ic('star')}Prioritárias<span class="qt">${qt(PRIO)}</span></button>`;
+  S.categorias.forEach(c => {
+    h += `<button class="aba ${S.aba === c.id ? 'ativa' : ''}" data-aba="${c.id}" type="button">${esc(c.nome)}<span class="qt">${qt(c.id)}</span></button>`;
+  });
+  h += `<button class="aba aba-nova" id="btnNovaCat" type="button">${ic('plus')}Categoria</button>`;
+  $('#abas').innerHTML = h;
+}
+
+function renderSelect() {
+  const sel = $('#novaCat'), atual = sel.value;
+  sel.innerHTML = S.categorias.map(c => `<option value="${c.id}">${esc(c.nome)}</option>`).join('');
+  if (S.categorias.some(c => c.id === atual)) sel.value = atual;
+  else if (S.aba !== PRIO) sel.value = S.aba;
+}
+
+function renderCabecalho() {
+  const lst = tarefasDaAba(S.aba);
+  const p = lst.filter(t => !t.concluida).length, c = lst.length - p;
+  $('#tituloAba').innerHTML = S.aba === PRIO ? `${ic('star')}Prioritárias` : esc(nomeCat(S.aba));
+  $('#resumo').textContent = `${p} pendente${p !== 1 ? 's' : ''} · ${c} concluída${c !== 1 ? 's' : ''}`;
+  $('#gerCat').innerHTML = S.aba === PRIO ? '' :
+    `<button class="btn-mini" data-cat="renomear" type="button">${ic('edit')}Renomear</button>
+     <button class="btn-mini perigo" data-cat="excluir" type="button">${ic('trash')}Excluir categoria</button>`;
+}
+
+function renderLista() {
+  const q = S.busca.trim().toLowerCase();
+  let lst = tarefasDaAba(S.aba);
+  if (q) lst = lst.filter(t => (t.titulo + ' ' + t.descricao).toLowerCase().includes(q));
+
+  const pend = lst.filter(t => !t.concluida).sort((a, b) =>
+    (S.aba !== PRIO && a.prioritaria !== b.prioritaria) ? (a.prioritaria ? -1 : 1) : String(b.criadoEm).localeCompare(String(a.criadoEm)));
+  const feitas = lst.filter(t => t.concluida).sort((a, b) => String(b.concluidoEm).localeCompare(String(a.concluidoEm)));
+
+  const cab = rot => `<div class="lista-cab"><span class="c-estrela"></span><span class="c-tarefa">Tarefa</span><span class="c-data">${rot}</span></div>`;
+  $('#lista').innerHTML = pend.length ? `<div class="lista-box">${cab('Lançamento')}${pend.map(cardHTML).join('')}</div>` :
+    `<div class="vazio">${q ? 'Nenhuma tarefa encontrada para essa busca.' :
+      S.aba === PRIO ? 'Nenhuma tarefa prioritária pendente. Marque a estrela de uma tarefa para ela aparecer aqui.' :
+      'Nenhuma tarefa pendente nesta categoria.'}</div>`;
+
+  $('#concluidasWrap').innerHTML = feitas.length ?
+    `<button class="toggle-done" id="toggleDone" type="button" aria-expanded="${S.verConcluidas}">${ic('chev')}Concluídas (${feitas.length})</button>
+     ${S.verConcluidas ? `<div class="lista-box">${cab('Conclusão')}${feitas.map(cardHTML).join('')}</div>` : ''}` : '';
+}
+
+/* Data à direita da linha: sempre a data do lançamento (dd/mm/aaaa). A hora aparece ao passar o mouse e no detalhe. */
+function fmtCurta(s) {
+  const d = parseDt(s); if (!d) return '';
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function cardHTML(t) {
+  const aberto = S.abertas.has(t.id);
+  const desc = t.descricao.replace(/\s+/g, ' ');
+  const dataRef = t.concluida ? t.concluidoEm : t.criadoEm;
+  return `<div class="item ${aberto ? 'aberto' : ''}">
+  <div class="card ${t.prioritaria ? 'is-prio' : ''} ${t.concluida ? 'is-done' : ''}" data-id="${esc(t.id)}" tabindex="0" aria-expanded="${aberto}">
+    <label class="prio-chk" title="${t.prioritaria ? 'Desmarcar prioridade' : 'Marcar como prioritária'}">
+      <input type="checkbox" data-acao="prio" ${t.prioritaria ? 'checked' : ''} aria-label="Prioritária">
+      <span class="estrela">${ic('star')}</span>
+    </label>
+    ${S.aba === PRIO ? `<span class="tag tag-cat">${esc(nomeCat(t.categoriaId))}</span>` : ''}
+    <div class="card-linha"><svg class="ic ic-done"><use href="#i-check"/></svg><span class="card-titulo">${esc(t.titulo)}</span>${desc ? `<span class="card-desc"> — ${esc(desc)}</span>` : ''}</div>
+    <span class="card-data" title="${t.concluida ? 'Concluída ' : 'Lançada '}${esc(fmtRel(dataRef))}">${esc(fmtCurta(dataRef))}</span>
+    <div class="card-acoes">
+      <button class="btn-acao" data-acao="concluir" type="button" title="${t.concluida ? 'Reabrir tarefa' : 'Marcar como concluída'}" aria-label="${t.concluida ? 'Reabrir' : 'Concluir'}">${ic(t.concluida ? 'undo' : 'check')}</button>
+      <button class="btn-acao" data-acao="editar" type="button" title="Editar" aria-label="Editar">${ic('edit')}</button>
+      <button class="btn-acao acao-perigo" data-acao="excluir" type="button" title="Excluir" aria-label="Excluir">${ic('trash')}</button>
+    </div>
+  </div>
+  ${aberto ? `<div class="detalhe">
+    ${t.descricao ? `<div class="detalhe-desc">${esc(t.descricao)}</div>` : ''}
+    <div class="detalhe-meta">
+      ${t.prioritaria ? `<span class="tag tag-prio">${ic('star')}Prioritária</span>` : ''}
+      <span class="tag">${esc(nomeCat(t.categoriaId))}</span>
+      ${t.concluida ? `<span class="tag tag-done">${ic('check')}Concluída ${esc(fmtRel(t.concluidoEm))}</span>` : ''}
+      <span>Lançada ${esc(fmtRel(t.criadoEm))}</span>
+    </div>
+  </div>` : ''}
+  </div>`;
+}
+
+/* ---------------- Abas e categorias ---------------- */
+$('#abas').addEventListener('click', e => {
+  if (e.target.closest('#btnNovaCat')) return novaCategoria();
+  const b = e.target.closest('[data-aba]'); if (!b) return;
+  S.aba = b.dataset.aba;
+  if (S.aba !== PRIO) $('#novaCat').value = S.aba;
+  $('#novaPrio').checked = S.aba === PRIO;
+  render();
+});
+
+$('#gerCat').addEventListener('click', e => {
+  const b = e.target.closest('[data-cat]'); if (!b) return;
+  b.dataset.cat === 'renomear' ? renomearCategoria() : excluirCategoria();
+});
+
+async function novaCategoria() {
+  const ok = await modal({ titulo: 'Nova categoria', ok: 'Criar',
+    html: `<label class="campo">Nome<input id="mNome" maxlength="40" placeholder="Ex.: Trabalho, Casa, Saúde…"></label>` });
+  if (!ok) return;
+  const nome = $('#mNome').value.trim().replace(/\s+/g, ' ');
+  if (!nome) return toast('Informe o nome da categoria.', 'erro');
+  if (S.categorias.some(c => c.nome.toLowerCase() === nome.toLowerCase())) return toast('Já existe uma categoria com esse nome.', 'erro');
+  const c = { id: novoId('c'), nome, ordem: S.categorias.reduce((m, x) => Math.max(m, x.ordem), 0) + 1, criadoEm: agoraLocal() };
+  const antesAba = S.aba;
+  executar('addCategoria', c,
+    () => { S.categorias.push(c); S.aba = c.id; $('#novaCat').value = c.id; $('#novaPrio').checked = false; },
+    () => { S.categorias = S.categorias.filter(x => x.id !== c.id); S.aba = antesAba; }
+  ).then(r => { if (r && r.id) { Object.assign(c, r); render(); } toast('Categoria criada.'); }).catch(() => {});
+}
+
+async function renomearCategoria() {
+  const c = S.categorias.find(x => x.id === S.aba); if (!c) return;
+  const ok = await modal({ titulo: 'Renomear categoria', ok: 'Salvar',
+    html: `<label class="campo">Nome<input id="mNome" maxlength="40" value="${esc(c.nome)}"></label>` });
+  if (!ok) return;
+  const nome = $('#mNome').value.trim().replace(/\s+/g, ' ');
+  if (!nome || nome === c.nome) return;
+  const antes = c.nome;
+  executar('renomearCategoria', { id: c.id, nome }, () => { c.nome = nome; }, () => { c.nome = antes; }).catch(() => {});
+}
+
+async function excluirCategoria() {
+  const c = S.categorias.find(x => x.id === S.aba); if (!c) return;
+  const n = S.tarefas.filter(t => t.categoriaId === c.id).length;
+  if (n > 0) return toast(`"${c.nome}" tem ${n} tarefa(s), incluindo concluídas. Mova ou exclua as tarefas antes.`, 'erro');
+  if (S.categorias.length <= 1) return toast('É preciso manter pelo menos uma categoria.', 'erro');
+  const ok = await modal({ titulo: 'Excluir categoria', ok: 'Excluir', perigo: true,
+    html: `<p>Excluir a categoria <b>${esc(c.nome)}</b>?</p>` });
+  if (!ok) return;
+  const idx = S.categorias.indexOf(c);
+  executar('excluirCategoria', { id: c.id },
+    () => { S.categorias.splice(idx, 1); S.aba = PRIO; },
+    () => { S.categorias.splice(idx, 0, c); S.aba = c.id; }
+  ).catch(() => {});
+}
+
+/* ---------------- Tarefas ---------------- */
+$('#formNova').addEventListener('submit', e => { e.preventDefault(); adicionarTarefa(); });
+$('#novaDesc').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); adicionarTarefa(); } });
+function mostrarDetalhe(v) {
+  $('#formNova').classList.toggle('com-detalhe', v);
+  const b = $('#btnDetalhe');
+  b.setAttribute('aria-pressed', String(v));
+  b.title = v ? 'Esconder campo de detalhes' : 'Mostrar campo de detalhes';
+}
+$('#novaDesc').addEventListener('input', marcarDetalhe);
+function marcarDetalhe() { $('#btnDetalhe').classList.toggle('tem-texto', !!$('#novaDesc').value.trim()); }
+$('#btnDetalhe').onclick = () => {
+  const abrir = !$('#formNova').classList.contains('com-detalhe');
+  mostrarDetalhe(abrir);
+  if (abrir) $('#novaDesc').focus();
+};
+
+function adicionarTarefa() {
+  const titulo = $('#novoTitulo').value.trim();
+  if (!titulo) return $('#novoTitulo').focus();
+  const categoriaId = $('#novaCat').value;
+  if (!categoriaId) return toast('Crie uma categoria primeiro.', 'erro');
+  const t = { id: novoId('t'), titulo, descricao: $('#novaDesc').value.trim(), categoriaId,
+    prioritaria: $('#novaPrio').checked, concluida: false, criadoEm: agoraLocal(), concluidoEm: '', atualizadoEm: '' };
+
+  $('#novoTitulo').value = ''; $('#novaDesc').value = ''; mostrarDetalhe(false); marcarDetalhe();
+  $('#novaPrio').checked = S.aba === PRIO;
+  $('#novoTitulo').focus();
+
+  executar('addTarefa', t, () => S.tarefas.push(t), () => { S.tarefas = S.tarefas.filter(x => x.id !== t.id); })
+    .then(substituir).catch(() => {});
+
+  const visivel = S.aba === PRIO ? t.prioritaria : S.aba === categoriaId;
+  if (!visivel) toast(`Tarefa adicionada em "${nomeCat(categoriaId)}"${t.prioritaria ? ' (prioritária)' : ''}.`);
+}
+
+$('#protegido').addEventListener('click', e => {
+  if (e.target.closest('#toggleDone')) { S.verConcluidas = !S.verConcluidas; renderLista(); return; }
+  const card = e.target.closest('.card'); if (!card) return;
+  const b = e.target.closest('[data-acao]');
+  if (!b) { if (!e.target.closest('.prio-chk')) alternarDetalhe(card.dataset.id); return; }
+  const id = card.dataset.id, a = b.dataset.acao;
+  if (a === 'prio') { e.preventDefault(); alternarPrio(id); }
+  else if (a === 'concluir') alternarConclusao(id);
+  else if (a === 'editar') editarTarefa(id);
+  else if (a === 'excluir') excluirTarefa(id);
+});
+
+function alternarDetalhe(id) {
+  S.abertas.has(id) ? S.abertas.delete(id) : S.abertas.add(id);
+  renderLista();
+}
+$('#protegido').addEventListener('keydown', e => {
+  const card = e.target.closest && e.target.closest('.card');
+  if (card && e.target === card && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); alternarDetalhe(card.dataset.id); }
+});
+
+function alternarPrio(id) {
+  const t = achar(id); if (!t) return;
+  const antes = t.prioritaria, v = !antes;
+  executar('definirPrioridade', { id, valor: v }, () => { t.prioritaria = v; }, () => { t.prioritaria = antes; })
+    .then(substituir).catch(() => {});
+}
+
+function alternarConclusao(id, silencioso) {
+  const t = achar(id); if (!t) return;
+  const antes = { concluida: t.concluida, concluidoEm: t.concluidoEm }, v = !t.concluida;
+  executar('definirConclusao', { id, valor: v },
+    () => { t.concluida = v; t.concluidoEm = v ? agoraLocal() : ''; },
+    () => Object.assign(t, antes)
+  ).then(substituir).catch(() => {});
+  if (!silencioso) toast(v ? 'Tarefa concluída — fica registrada em "Concluídas".' : 'Tarefa reaberta.', '',
+    { rotulo: 'Desfazer', fn: () => alternarConclusao(id, true) });
+}
+
+async function editarTarefa(id) {
+  const t = achar(id); if (!t) return;
+  const ok = await modal({ titulo: 'Editar tarefa', ok: 'Salvar', html: `
+    <label class="campo">Título<input id="mTitulo" maxlength="300" value="${esc(t.titulo)}"></label>
+    <label class="campo">Detalhes<textarea id="mDesc" rows="4">${esc(t.descricao)}</textarea></label>
+    <label class="campo">Categoria<select id="mCat">${S.categorias.map(c => `<option value="${c.id}" ${c.id === t.categoriaId ? 'selected' : ''}>${esc(c.nome)}</option>`).join('')}</select></label>
+    <label class="chk-prio" style="align-self:flex-start"><input type="checkbox" id="mPrio" ${t.prioritaria ? 'checked' : ''}>${ic('star')}<span>Prioritária</span></label>
+    <p class="mut" style="font-size:13px">Lançada ${esc(fmtRel(t.criadoEm))}</p>` });
+  if (!ok) return;
+  const novo = { titulo: $('#mTitulo').value.trim(), descricao: $('#mDesc').value.trim(), categoriaId: $('#mCat').value, prioritaria: $('#mPrio').checked };
+  if (!novo.titulo) return toast('O título não pode ficar vazio.', 'erro');
+  const antes = { titulo: t.titulo, descricao: t.descricao, categoriaId: t.categoriaId, prioritaria: t.prioritaria };
+  executar('editarTarefa', { id, ...novo }, () => Object.assign(t, novo), () => Object.assign(t, antes))
+    .then(substituir).catch(() => {});
+}
+
+async function excluirTarefa(id) {
+  const t = achar(id); if (!t) return;
+  const ok = await modal({ titulo: 'Excluir tarefa', ok: 'Excluir', perigo: true,
+    html: `<p>Excluir definitivamente <b>${esc(t.titulo)}</b>?</p><p class="mut" style="font-size:13px">Se quiser manter o registro, use <b>Concluir</b> em vez de excluir.</p>` });
+  if (!ok) return;
+  const idx = S.tarefas.indexOf(t);
+  executar('excluirTarefa', { id }, () => S.tarefas.splice(idx, 1), () => S.tarefas.splice(idx, 0, t))
+    .then(() => toast('Tarefa excluída.')).catch(() => {});
+}
+
+/* ---------------- Busca ---------------- */
+$('#busca').addEventListener('input', e => { S.busca = e.target.value; renderLista(); });
+
+/* ---------------- Tema ---------------- */
+function aplicarTema(t) {
+  document.documentElement.dataset.theme = t;
+  $('#btnTema').innerHTML = ic(t === 'dark' ? 'sun' : 'moon');
+  $('#btnTema').title = t === 'dark' ? 'Mudar para modo claro' : 'Mudar para modo escuro';
+}
+$('#btnTema').onclick = () => {
+  const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  aplicarTema(t); S.config.tema = t;
+  api('setConfig', { chave: 'tema', valor: t }).catch(() => {});
+};
+aplicarTema(matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+
+/* ---------------- Modo privado ---------------- */
+const prot = $('#protegido');
+let revTmr;
+function aplicarPrivado() {
+  document.body.classList.toggle('privado', S.privado);
+  const b = $('#btnPrivado');
+  b.setAttribute('aria-pressed', String(S.privado));
+  b.innerHTML = ic(S.privado ? 'eyeoff' : 'eye');
+  b.title = (S.privado ? 'Modo privado LIGADO' : 'Modo privado desligado') + ' — atalho P';
+  prot.classList.remove('revelado');
+}
+function alternarPrivado() {
+  S.privado = !S.privado; aplicarPrivado();
+  toast(S.privado ? 'Modo privado ligado: a lista só aparece com o mouse sobre ela.' : 'Modo privado desligado.');
+  api('setConfig', { chave: 'privado', valor: S.privado ? '1' : '0' }).catch(() => {});
+}
+$('#btnPrivado').onclick = alternarPrivado;
+prot.addEventListener('mouseenter', () => prot.classList.add('revelado'));
+prot.addEventListener('mouseleave', () => prot.classList.remove('revelado'));
+prot.addEventListener('pointerdown', e => {
+  if (e.pointerType !== 'mouse' && S.privado && !prot.classList.contains('revelado')) {
+    prot.classList.add('revelado');
+    clearTimeout(revTmr);
+    revTmr = setTimeout(() => prot.classList.remove('revelado'), 15000);
+  }
+});
+window.addEventListener('blur', () => prot.classList.remove('revelado'));
+document.addEventListener('visibilitychange', () => { if (document.hidden) prot.classList.remove('revelado'); });
+
+/* ---------------- Backup e restauração ---------------- */
+$('#btnBackup').onclick = async () => {
+  sync(+1);
+  try {
+    const d = await api('backup'); sync(-1);
+    d.versaoApp = VERSAO;
+    const blob = new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `agenda-backup-${agoraLocal().replace(/[: ]/g, '-').slice(0, 16)}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+    toast(`Backup baixado: ${d.categorias.length} categorias, ${d.tarefas.length} tarefas.`);
+  } catch (e) { sync(-1, true); toast(e.message, 'erro'); }
+};
+
+$('#btnRestaurar').onclick = () => $('#arqRestaurar').click();
+$('#arqRestaurar').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  let d;
+  try { d = JSON.parse(await f.text()); } catch (err) { return toast('Arquivo inválido.', 'erro'); }
+  if (!d || d.app !== 'agenda' || !Array.isArray(d.categorias) || !Array.isArray(d.tarefas))
+    return toast('Este arquivo não é um backup da Agenda.', 'erro');
+  const ok = await modal({ titulo: 'Restaurar backup', ok: 'Restaurar', perigo: true, html: `
+    <p>Backup gerado <b>${esc(fmtRel(d.geradoEm))}</b> com <b>${d.categorias.length}</b> categorias e <b>${d.tarefas.length}</b> tarefas.</p>
+    <p>Os dados atuais serão <b>substituídos</b> pelos do arquivo.</p>
+    <p class="mut" style="font-size:13px">Antes de substituir, uma cópia dos dados atuais é salva automaticamente na planilha (abas "BKP …").</p>` });
+  if (!ok) return;
+  sync(+1);
+  try {
+    const r = await api('restaurar', { categorias: d.categorias, tarefas: d.tarefas });
+    sync(-1); aplicarCarga(r); toast('Backup restaurado.');
+  } catch (err) { sync(-1, true); toast(err.message, 'erro'); }
+});
+
+/* ---------------- Trocar senha ---------------- */
+$('#btnSenha').onclick = async () => {
+  const ok = await modal({ titulo: 'Trocar senha', ok: 'Salvar', html: `
+    <label class="campo">Nova senha<input type="password" id="mS1" autocomplete="new-password"></label>
+    <label class="campo">Repita a nova senha<input type="password" id="mS2" autocomplete="new-password"></label>` });
+  if (!ok) return;
+  const s1 = $('#mS1').value, s2 = $('#mS2').value;
+  if (s1.length < 3) return toast('A senha precisa ter pelo menos 3 caracteres.', 'erro');
+  if (s1 !== s2) return toast('As senhas não conferem.', 'erro');
+  sync(+1);
+  try { await api('trocarSenha', { nova: s1 }); SENHA = s1; sync(-1); toast('Senha alterada.'); }
+  catch (e) { sync(-1, true); toast(e.message, 'erro'); }
+};
+
+/* ---------------- Modal e avisos ---------------- */
+function modal({ titulo, html, ok = 'Confirmar', cancelar = 'Cancelar', perigo = false }) {
+  return new Promise(res => {
+    const m = $('#modal');
+    $('#modalTitulo').textContent = titulo;
+    $('#modalCorpo').innerHTML = html;
+    const bOk = $('#modalOk'), bC = $('#modalCancel');
+    bOk.textContent = ok; bOk.className = 'btn ' + (perigo ? 'btn-perigo' : 'btn-prim');
+    bC.textContent = cancelar;
+    m.hidden = false;
+    const f = m.querySelector('.modal-corpo input, .modal-corpo textarea, .modal-corpo select');
+    setTimeout(() => (f || bOk).focus(), 30);
+    const fechar = v => { m.hidden = true; bOk.onclick = bC.onclick = m.onkeydown = m.onclick = null; res(v); };
+    bOk.onclick = () => fechar(true);
+    bC.onclick = () => fechar(false);
+    m.onclick = e => { if (e.target === m) fechar(false); };
+    m.onkeydown = e => {
+      if (e.key === 'Escape') fechar(false);
+      else if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'BUTTON') { e.preventDefault(); fechar(true); }
+    };
+  });
+}
+
+function toast(msg, tipo = '', acao) {
+  const t = document.createElement('div');
+  t.className = 'toast ' + tipo; t.setAttribute('role', 'status');
+  const s = document.createElement('span'); s.textContent = msg; t.appendChild(s);
+  if (acao) {
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = acao.rotulo;
+    b.onclick = () => { acao.fn(); t.remove(); };
+    t.appendChild(b);
+  }
+  $('#toasts').appendChild(t);
+  const box = $('#toasts'); while (box.children.length > 3) box.firstChild.remove();
+  setTimeout(() => t.remove(), acao ? 6000 : tipo === 'erro' ? 5500 : 2800);
+}
+
+/* ---------------- Atalhos de teclado ---------------- */
+document.addEventListener('keydown', e => {
+  if ($('#app').hidden || !$('#modal').hidden) return;
+  if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) { if (e.key === 'Escape') e.target.blur(); return; }
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const k = e.key.toLowerCase();
+  if (k === 'n') { e.preventDefault(); $('#novoTitulo').focus(); }
+  else if (k === '/') { e.preventDefault(); $('#busca').focus(); }
+  else if (k === 'p') alternarPrivado();
+});
+
+/* Aviso ao fechar a página com algo ainda sendo salvo */
+window.addEventListener('beforeunload', e => { if (pend > 0) { e.preventDefault(); e.returnValue = ''; } });
+</script>
+</body>
+</html>
