@@ -202,6 +202,15 @@ body.privado .protegido:not(.revelado) .veu{display:flex;position:absolute;inset
 .modal-corpo p{margin:0}
 .campo{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--mut)}
 .modal-botoes{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
+.modal-rec{max-width:520px}
+.rec-lista{display:flex;flex-direction:column;gap:8px;max-height:50vh;overflow-y:auto;margin-bottom:14px}
+.rec-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--bor);border-radius:10px;background:var(--sup2)}
+.rec-item.inativo{opacity:.55}
+.rec-info{flex:1;min-width:0}
+.rec-titulo{font-weight:600;font-size:14px;display:flex;align-items:center;gap:5px}
+.rec-titulo .ic{width:14px;height:14px;fill:var(--prio);stroke:var(--prio-dk)}
+.rec-meta{font-size:12.5px;color:var(--mut);margin-top:2px}
+.rec-acoes{display:flex;gap:2px;flex:none}
 #toasts{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;z-index:60;align-items:center;width:calc(100% - 32px);max-width:420px}
 .toast{background:var(--txt);color:var(--bg);padding:11px 14px;border-radius:12px;box-shadow:var(--sombra);display:flex;align-items:center;gap:12px;font-weight:500;animation:entra .2s;width:100%}
 .toast.erro{background:var(--sup);color:var(--txt);border:2px solid var(--txt);font-weight:700}
@@ -256,6 +265,7 @@ body.privado .protegido:not(.revelado) .veu{display:flex;position:absolute;inset
   <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
   <symbol id="i-arrL" viewBox="0 0 24 24"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></symbol>
   <symbol id="i-arrR" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></symbol>
+  <symbol id="i-repeat" viewBox="0 0 24 24"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></symbol>
 </svg>
 
 <!-- LOGIN -->
@@ -286,6 +296,7 @@ body.privado .protegido:not(.revelado) .veu{display:flex;position:absolute;inset
         <button class="btn-ic" id="btnBackup" type="button" title="Backup (baixa um arquivo)"><svg class="ic"><use href="#i-down"/></svg></button>
         <button class="btn-ic" id="btnRestaurar" type="button" title="Restaurar backup"><svg class="ic"><use href="#i-up"/></svg></button>
         <button class="btn-ic" id="btnSenha" type="button" title="Trocar senha"><svg class="ic"><use href="#i-key"/></svg></button>
+        <button class="btn-ic" id="btnRecorrentes" type="button" title="Tarefas recorrentes"><svg class="ic"><use href="#i-repeat"/></svg></button>
         <button class="btn-ic" id="btnConfigApp" type="button" title="Alterar URL da planilha (Apps Script)"><svg class="ic"><use href="#i-gear"/></svg></button>
         <button class="btn-ic" id="btnBloquear" type="button" title="Bloquear agenda"><svg class="ic"><use href="#i-lock"/></svg></button>
         <input type="file" id="arqRestaurar" accept=".json,application/json" hidden>
@@ -339,6 +350,18 @@ body.privado .protegido:not(.revelado) .veu{display:flex;position:absolute;inset
   </div>
 </div>
 
+<!-- PAINEL DE RECORRÊNCIAS -->
+<div id="modalRec" class="modal-fundo" hidden>
+  <div class="modal modal-rec" role="dialog" aria-modal="true" aria-labelledby="recTitulo">
+    <h3 id="recTitulo">Tarefas recorrentes</h3>
+    <div id="recLista" class="rec-lista"></div>
+    <button class="btn btn-sec btn-bloco" id="btnNovaRec" type="button">+ Nova recorrência</button>
+    <div class="modal-botoes">
+      <button class="btn btn-prim" id="recFechar" type="button">Fechar</button>
+    </div>
+  </div>
+</div>
+
 <div id="toasts"></div>
 
 <script>
@@ -356,8 +379,11 @@ body.privado .protegido:not(.revelado) .veu{display:flex;position:absolute;inset
    V1.1 (22/09/2026): abas mais compactas; URL do Apps Script movida da tela de
    login para um modal de configuração (acessível também de dentro do app);
    reordenar categorias/abas com botões ◀ ▶ (persiste no Sheets).
+   V1.2 (22/09/2026): tarefas recorrentes (diária / semanal / mensal) — cadastradas
+   em um painel próprio e lançadas automaticamente no dia certo, mesmo sem abrir o app
+   (gatilho diário no Apps Script).
    ============================================================ */
-const VERSAO = 'V1.1';
+const VERSAO = 'V1.2';
 const VERSAO_DATA = '22/09/2026';
 document.querySelectorAll('[data-versao]').forEach(el => { el.textContent = VERSAO; el.title = 'Versão ' + VERSAO + ' — ' + VERSAO_DATA; });
 
@@ -370,7 +396,8 @@ let API_URL = lerUrl();
 /* ---------------- Estado (só em memória) ---------------- */
 const PRIO = '__prio';
 let SENHA = null;
-const S = { categorias: [], tarefas: [], config: {}, aba: PRIO, busca: '', verConcluidas: false, privado: false, abertas: new Set() };
+const S = { categorias: [], tarefas: [], recorrencias: [], config: {}, aba: PRIO, busca: '', verConcluidas: false, privado: false, abertas: new Set() };
+const DIAS_SEMANA = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
 
 const $ = s => document.querySelector(s);
 const ic = n => `<svg class="ic"><use href="#i-${n}"/></svg>`;
@@ -524,6 +551,7 @@ $('#btnBloquear').onclick = () => bloquear();
 function aplicarCarga(d) {
   S.categorias = d.categorias || [];
   S.tarefas = d.tarefas || [];
+  S.recorrencias = d.recorrencias || [];
   S.config = d.config || {};
   aplicarTema(S.config.tema || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
   S.privado = S.config.privado === '1';
@@ -698,6 +726,118 @@ async function excluirCategoria() {
     () => { S.categorias.splice(idx, 1); S.aba = PRIO; },
     () => { S.categorias.splice(idx, 0, c); S.aba = c.id; }
   ).catch(() => {});
+}
+
+/* ---------------- Tarefas recorrentes ---------------- */
+function freqTexto(r) {
+  if (r.tipo === 'diaria') return 'Todos os dias';
+  if (r.tipo === 'semanal') return 'Toda ' + DIAS_SEMANA[r.diaSemana];
+  if (r.tipo === 'mensal') return 'Todo dia ' + r.diaMes;
+  return '';
+}
+
+function abrirRecorrencias() { renderRecorrencias(); $('#modalRec').hidden = false; }
+$('#btnRecorrentes').onclick = abrirRecorrencias;
+$('#recFechar').onclick = () => { $('#modalRec').hidden = true; };
+$('#modalRec').addEventListener('click', e => { if (e.target === $('#modalRec')) $('#modalRec').hidden = true; });
+$('#btnNovaRec').onclick = () => formRecorrencia();
+
+function renderRecorrencias() {
+  const lst = S.recorrencias.slice().sort((a, b) => a.titulo.localeCompare(b.titulo, 'pt-BR'));
+  $('#recLista').innerHTML = lst.length ? lst.map(r => `
+    <div class="rec-item ${r.ativo ? '' : 'inativo'}">
+      <div class="rec-info">
+        <div class="rec-titulo">${esc(r.titulo)}${r.prioritaria ? ic('star') : ''}</div>
+        <div class="rec-meta">${esc(freqTexto(r))} · ${esc(nomeCat(r.categoriaId))}${r.ativo ? '' : ' · pausada'}</div>
+      </div>
+      <div class="rec-acoes">
+        <button class="btn-acao" data-rec="ativo" data-id="${esc(r.id)}" type="button" title="${r.ativo ? 'Pausar' : 'Ativar'}" aria-label="${r.ativo ? 'Pausar' : 'Ativar'}">${ic(r.ativo ? 'eye' : 'eyeoff')}</button>
+        <button class="btn-acao" data-rec="editar" data-id="${esc(r.id)}" type="button" title="Editar" aria-label="Editar">${ic('edit')}</button>
+        <button class="btn-acao acao-perigo" data-rec="excluir" data-id="${esc(r.id)}" type="button" title="Excluir" aria-label="Excluir">${ic('trash')}</button>
+      </div>
+    </div>`).join('') : `<div class="vazio">Nenhuma tarefa recorrente cadastrada.</div>`;
+}
+
+$('#recLista').addEventListener('click', e => {
+  const b = e.target.closest('[data-rec]'); if (!b) return;
+  const id = b.dataset.id, a = b.dataset.rec;
+  if (a === 'editar') { const r = S.recorrencias.find(x => x.id === id); if (r) formRecorrencia(r); }
+  else if (a === 'excluir') excluirRecorrencia(id);
+  else if (a === 'ativo') alternarAtivoRecorrencia(id);
+});
+
+function atualizarCamposRec() {
+  const t = $('#rTipo').value;
+  $('#rCampoSemana').style.display = t === 'semanal' ? '' : 'none';
+  $('#rCampoMes').style.display = t === 'mensal' ? '' : 'none';
+}
+
+async function formRecorrencia(r) {
+  if (!S.categorias.length) return toast('Crie uma categoria primeiro.', 'erro');
+  const editando = !!r;
+  $('#modalRec').hidden = true;
+  const html = `
+    <label class="campo">Título<input id="rTitulo" maxlength="300" value="${r ? esc(r.titulo) : ''}" placeholder="Ex.: Enviar relatório semanal"></label>
+    <label class="campo">Detalhes (opcional)<textarea id="rDesc" rows="3">${r ? esc(r.descricao) : ''}</textarea></label>
+    <label class="campo">Categoria<select id="rCat">${S.categorias.map(c => `<option value="${c.id}" ${r && r.categoriaId === c.id ? 'selected' : ''}>${esc(c.nome)}</option>`).join('')}</select></label>
+    <label class="campo">Frequência<select id="rTipo">
+        <option value="diaria" ${r && r.tipo === 'diaria' ? 'selected' : ''}>Diária</option>
+        <option value="semanal" ${!r || r.tipo === 'semanal' ? 'selected' : ''}>Semanal</option>
+        <option value="mensal" ${r && r.tipo === 'mensal' ? 'selected' : ''}>Mensal</option>
+      </select></label>
+    <label class="campo" id="rCampoSemana">Dia da semana<select id="rDiaSemana">${DIAS_SEMANA.map((n, i) => `<option value="${i}" ${r && r.diaSemana === i ? 'selected' : ''}>${n.charAt(0).toUpperCase() + n.slice(1)}</option>`).join('')}</select></label>
+    <label class="campo" id="rCampoMes">Dia do mês (1 a 31)<input id="rDiaMes" type="number" min="1" max="31" value="${r ? r.diaMes : 1}"></label>
+    <label class="chk-prio" style="align-self:flex-start"><input type="checkbox" id="rPrio" ${r && r.prioritaria ? 'checked' : ''}>${ic('star')}<span>Prioritária</span></label>`;
+  const pOk = modal({ titulo: editando ? 'Editar recorrência' : 'Nova recorrência', ok: 'Salvar', html });
+  atualizarCamposRec();
+  $('#rTipo').addEventListener('change', atualizarCamposRec);
+  const ok = await pOk;
+  if (!ok) { $('#modalRec').hidden = false; renderRecorrencias(); return; }
+
+  const dados = {
+    titulo: $('#rTitulo').value.trim(), descricao: $('#rDesc').value.trim(), categoriaId: $('#rCat').value,
+    tipo: $('#rTipo').value, diaSemana: Number($('#rDiaSemana').value), diaMes: Number($('#rDiaMes').value),
+    prioritaria: $('#rPrio').checked
+  };
+  if (!dados.titulo) {
+    toast('Informe o título da recorrência.', 'erro');
+    $('#modalRec').hidden = false; renderRecorrencias();
+    return formRecorrencia(r);
+  }
+  sync(+1);
+  try {
+    const acao = editando ? 'editarRecorrencia' : 'addRecorrencia';
+    const payload = editando ? Object.assign({ id: r.id }, dados) : dados;
+    const novo = await api(acao, payload);
+    if (editando) { const i = S.recorrencias.findIndex(x => x.id === r.id); if (i >= 0) S.recorrencias[i] = novo; }
+    else S.recorrencias.push(novo);
+    sync(-1);
+    toast(editando ? 'Recorrência atualizada.' : 'Recorrência criada. A tarefa aparece automaticamente no(s) dia(s) certo(s).');
+  } catch (e) { sync(-1, true); toast(e.message, 'erro'); }
+  $('#modalRec').hidden = false;
+  renderRecorrencias();
+}
+
+async function excluirRecorrencia(id) {
+  const r = S.recorrencias.find(x => x.id === id); if (!r) return;
+  $('#modalRec').hidden = true;
+  const ok = await modal({ titulo: 'Excluir recorrência', ok: 'Excluir', perigo: true,
+    html: `<p>Excluir a recorrência <b>${esc(r.titulo)}</b>?</p><p class="mut" style="font-size:13px">Tarefas que ela já criou não são apagadas — só deixa de gerar novas.</p>` });
+  if (ok) {
+    sync(+1);
+    try { await api('excluirRecorrencia', { id }); S.recorrencias = S.recorrencias.filter(x => x.id !== id); sync(-1); toast('Recorrência excluída.'); }
+    catch (e) { sync(-1, true); toast(e.message, 'erro'); }
+  }
+  $('#modalRec').hidden = false;
+  renderRecorrencias();
+}
+
+async function alternarAtivoRecorrencia(id) {
+  const r = S.recorrencias.find(x => x.id === id); if (!r) return;
+  const antes = r.ativo, v = !antes;
+  r.ativo = v; renderRecorrencias();
+  try { await api('ativarRecorrencia', { id, valor: v }); }
+  catch (e) { r.ativo = antes; renderRecorrencias(); toast(e.message, 'erro'); }
 }
 
 /* ---------------- Tarefas ---------------- */
