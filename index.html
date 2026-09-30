@@ -61,6 +61,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--acc);box-shadow:0 0 0
 .logo{width:56px;height:56px;border-radius:16px;background:var(--nav);color:var(--acc-txt);display:grid;place-items:center;margin:0 auto}
 .logo .ic{width:28px;height:28px}
 .erro{color:var(--perigo);min-height:1.3em;font-weight:600;font-size:14px}
+.link-url{background:none;border:none;color:var(--acc);font-weight:600;font-size:13px;text-decoration:underline;text-underline-offset:3px;padding:2px}
 
 /* Topo */
 .topo{position:sticky;top:0;z-index:20;background:var(--nav);color:var(--nav-txt);box-shadow:0 2px 8px rgba(15,23,42,.18)}
@@ -272,8 +273,8 @@ body.privado .protegido:not(.revelado) .veu{display:flex;position:absolute;inset
   <symbol id="i-arrL" viewBox="0 0 24 24"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></symbol>
   <symbol id="i-arrR" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></symbol>
   <symbol id="i-repeat" viewBox="0 0 24 24"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></symbol>
-  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
   <symbol id="i-flag" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22V15"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
 </svg>
 
 <!-- LOGIN -->
@@ -285,6 +286,7 @@ body.privado .protegido:not(.revelado) .veu{display:flex;position:absolute;inset
     <input type="password" id="senha" placeholder="Senha" autocomplete="current-password" required>
     <button class="btn btn-prim btn-bloco" id="btnEntrar" type="submit">Entrar</button>
     <p id="loginErro" class="erro" role="alert"></p>
+    <button type="button" class="link-url" id="btnConfigUrl">Configurações — URL do Apps Script</button>
   </form>
 </div>
 
@@ -304,7 +306,6 @@ body.privado .protegido:not(.revelado) .veu{display:flex;position:absolute;inset
         <button class="btn-ic" id="btnRestaurar" type="button" title="Restaurar backup"><svg class="ic"><use href="#i-up"/></svg></button>
         <button class="btn-ic" id="btnSenha" type="button" title="Trocar senha"><svg class="ic"><use href="#i-key"/></svg></button>
         <button class="btn-ic" id="btnRecorrentes" type="button" title="Tarefas recorrentes"><svg class="ic"><use href="#i-repeat"/></svg></button>
-        <button class="btn-ic" id="btnVerUrl" type="button" title="Ver/copiar URL da planilha (Apps Script)"><svg class="ic"><use href="#i-copy"/></svg></button>
         <button class="btn-ic" id="btnBloquear" type="button" title="Bloquear agenda"><svg class="ic"><use href="#i-lock"/></svg></button>
         <input type="file" id="arqRestaurar" accept=".json,application/json" hidden>
       </div>
@@ -397,14 +398,19 @@ body.privado .protegido:not(.revelado) .veu{display:flex;position:absolute;inset
    gravar nada no navegador) — como nos outros apps.
    V1.5 (29/09/2026): marcação de "Destaque" nas tarefas — independente da
    Prioritária, não move a tarefa de aba, só realça (negrito + bandeira azul).
+   V1.6 (29/09/2026): volta o campo de URL do Apps Script para a tela de login,
+   sempre visível — sem gravar em localStorage nem fixar no código. Cola toda
+   vez que abrir, igual aos outros apps.
    ============================================================ */
-const VERSAO = 'V1.5';
+const VERSAO = 'V1.6';
 const VERSAO_DATA = '29/09/2026';
 document.querySelectorAll('[data-versao]').forEach(el => { el.textContent = VERSAO; el.title = 'Versão ' + VERSAO + ' — ' + VERSAO_DATA; });
 
-/* URL fixa da implantação do Apps Script — nada fica guardado no navegador
-   (nem essa URL, nem tarefa, categoria ou configuração: tudo vive só no Sheets). */
-const API_URL = 'https://script.google.com/macros/s/AKfycbxWMJTa3bJkqL7ALXt3o26l2v-saiJA4zP9n7P5VeameTxSv_fj3hezXmV6Y8oDC9n4Ww/exec';
+/* URL do Apps Script: colada na tela de login a cada acesso. Nada fica guardado
+   no navegador — nem essa URL, nem tarefa, categoria ou configuração. Tudo vive
+   só na planilha (Sheets). */
+const RE_URL = /^https:\/\/script\.google(usercontent)?\.com\/.+\/exec$/;
+let API_URL = '';
 
 /* ---------------- Estado (só em memória) ---------------- */
 const PRIO = '__prio';
@@ -496,6 +502,13 @@ function substituir(r) {
 $('#loginForm').addEventListener('submit', async e => {
   e.preventDefault();
   const b = $('#btnEntrar'); $('#loginErro').textContent = '';
+  const u = $('#urlApi').value.trim();
+  if (!u) { $('#loginErro').textContent = 'Cole a URL do Apps Script.'; return $('#urlApi').focus(); }
+  if (!RE_URL.test(u)) {
+    $('#loginErro').textContent = /\/dev$/.test(u) ? 'Essa URL termina em /dev. Use a URL da implantação, que termina em /exec.' : 'URL inválida. Ela começa com https://script.google.com/ e termina em /exec.';
+    return $('#urlApi').focus();
+  }
+  API_URL = u;
   SENHA = $('#senha').value;
   b.disabled = true; b.textContent = 'Entrando…';
   try {
@@ -506,50 +519,26 @@ $('#loginForm').addEventListener('submit', async e => {
     aplicarCarga(d);
     $('#novoTitulo').focus();
   } catch (err) {
+    API_URL = '';
     SENHA = null;
     $('#loginErro').textContent = err.message;
   } finally {
     b.disabled = false; b.textContent = 'Entrar';
   }
 });
-setTimeout(() => $('#senha').focus(), 50);
-
-/* Janela só de leitura para consultar/copiar a URL fixa no código — não edita nada,
-   não grava nada no navegador. Só existe para você não precisar abrir o arquivo
-   toda vez que quiser essa URL (ex.: para colar em outro app ou verificar). */
-async function copiarTexto(txt) {
-  try { await navigator.clipboard.writeText(txt); return true; } catch (e) {}
-  try {
-    const ta = document.createElement('textarea');
-    ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
-    document.body.appendChild(ta); ta.focus(); ta.select();
-    const ok = document.execCommand('copy'); ta.remove();
-    return ok;
-  } catch (e) { return false; }
-}
-async function verUrlApi() {
-  const ok = await modal({ titulo: 'URL da planilha (Apps Script)', ok: 'Copiar URL', cancelar: 'Fechar', html: `
-    <label class="campo">URL fixa no código deste app
-      <input id="mUrlView" type="text" value="${esc(API_URL)}" readonly onclick="this.select()" onfocus="this.select()">
-    </label>
-    <p class="mut" style="font-size:13px">Somente para consulta/cópia. Ela está gravada no próprio arquivo do app — para mudar de verdade, é preciso editar o código-fonte e publicar de novo.</p>` });
-  if (ok) {
-    const copiou = await copiarTexto(API_URL);
-    toast(copiou ? 'URL copiada para a área de transferência.' : 'Não deu para copiar automaticamente — selecione o texto e copie manualmente.', copiou ? '' : 'erro');
-  }
-}
-$('#btnVerUrl').onclick = verUrlApi;
+setTimeout(() => $('#urlApi').focus(), 50);
 
 function bloquear(msg) {
   SENHA = null;
+  API_URL = '';
   S.categorias = []; S.tarefas = []; S.recorrencias = []; S.busca = ''; S.abertas.clear();
   $('#lista').innerHTML = ''; $('#concluidasWrap').innerHTML = ''; $('#abas').innerHTML = '';
-  $('#busca').value = '';
+  $('#busca').value = ''; $('#urlApi').value = '';
   $('#modal').hidden = true;
   $('#modalRec').hidden = true;
   $('#app').hidden = true; $('#login').hidden = false;
   $('#loginErro').textContent = msg || '';
-  $('#senha').focus();
+  $('#urlApi').focus();
 }
 $('#btnBloquear').onclick = () => bloquear();
 
