@@ -306,6 +306,7 @@ body.privado .protegido:not(.revelado) .veu{display:flex;position:absolute;inset
         <button class="btn-ic" id="btnRestaurar" type="button" title="Restaurar backup"><svg class="ic"><use href="#i-up"/></svg></button>
         <button class="btn-ic" id="btnSenha" type="button" title="Trocar senha"><svg class="ic"><use href="#i-key"/></svg></button>
         <button class="btn-ic" id="btnRecorrentes" type="button" title="Tarefas recorrentes"><svg class="ic"><use href="#i-repeat"/></svg></button>
+        <button class="btn-ic" id="btnConfigApp" type="button" title="Configurações — URL do Apps Script"><svg class="ic"><use href="#i-gear"/></svg></button>
         <button class="btn-ic" id="btnBloquear" type="button" title="Bloquear agenda"><svg class="ic"><use href="#i-lock"/></svg></button>
         <input type="file" id="arqRestaurar" accept=".json,application/json" hidden>
       </div>
@@ -398,9 +399,12 @@ body.privado .protegido:not(.revelado) .veu{display:flex;position:absolute;inset
    gravar nada no navegador) — como nos outros apps.
    V1.5 (29/09/2026): marcação de "Destaque" nas tarefas — independente da
    Prioritária, não move a tarefa de aba, só realça (negrito + bandeira azul).
-   V1.6 (29/09/2026): volta o campo de URL do Apps Script para a tela de login,
-   sempre visível — sem gravar em localStorage nem fixar no código. Cola toda
-   vez que abrir, igual aos outros apps.
+   V1.6 (29/09/2026): a URL do Apps Script volta a viver numa tela de configuração
+   própria — um botão "Configurações" no login e um ícone de engrenagem no topo
+   do app abrem um modal só para colar/trocar a URL. Nada é gravado em
+   localStorage nem fixado no código: a URL fica só na memória da página
+   enquanto ela estiver aberta e precisa ser colada de novo a cada vez que o
+   app é aberto, igual aos outros apps.
    ============================================================ */
 const VERSAO = 'V1.6';
 const VERSAO_DATA = '29/09/2026';
@@ -498,17 +502,34 @@ function substituir(r) {
   if (i >= 0) { S.tarefas[i] = r; render(); }
 }
 
+/* ---------------- Configuração da URL do Apps Script ---------------- */
+async function configurarUrl() {
+  const ok = await modal({
+    titulo: 'URL do Apps Script', ok: 'Salvar',
+    html: `<p class="mut" style="margin:0 0 4px">Cole aqui a URL da implantação do Apps Script (termina em <b>/exec</b>). Ela fica só nesta sessão — nada é gravado no navegador.</p>
+           <label class="campo">URL<input id="mUrl" placeholder="https://script.google.com/macros/s/…/exec" value="${esc(API_URL)}"></label>`
+  });
+  if (!ok) return false;
+  const u = $('#mUrl').value.trim();
+  if (!u) { toast('Cole a URL do Apps Script.', 'erro'); return false; }
+  if (!RE_URL.test(u)) {
+    toast(/\/dev$/.test(u) ? 'Essa URL termina em /dev. Use a URL da implantação, que termina em /exec.' : 'URL inválida. Ela começa com https://script.google.com/ e termina em /exec.', 'erro');
+    return false;
+  }
+  API_URL = u;
+  return true;
+}
+$('#btnConfigUrl').onclick = configurarUrl;
+$('#btnConfigApp').onclick = configurarUrl;
+
 /* ---------------- Login / bloqueio ---------------- */
 $('#loginForm').addEventListener('submit', async e => {
   e.preventDefault();
   const b = $('#btnEntrar'); $('#loginErro').textContent = '';
-  const u = $('#urlApi').value.trim();
-  if (!u) { $('#loginErro').textContent = 'Cole a URL do Apps Script.'; return $('#urlApi').focus(); }
-  if (!RE_URL.test(u)) {
-    $('#loginErro').textContent = /\/dev$/.test(u) ? 'Essa URL termina em /dev. Use a URL da implantação, que termina em /exec.' : 'URL inválida. Ela começa com https://script.google.com/ e termina em /exec.';
-    return $('#urlApi').focus();
+  if (!API_URL) {
+    const ok = await configurarUrl();
+    if (!ok) return;
   }
-  API_URL = u;
   SENHA = $('#senha').value;
   b.disabled = true; b.textContent = 'Entrando…';
   try {
@@ -526,19 +547,19 @@ $('#loginForm').addEventListener('submit', async e => {
     b.disabled = false; b.textContent = 'Entrar';
   }
 });
-setTimeout(() => $('#urlApi').focus(), 50);
+setTimeout(() => $('#senha').focus(), 50);
 
 function bloquear(msg) {
   SENHA = null;
   API_URL = '';
   S.categorias = []; S.tarefas = []; S.recorrencias = []; S.busca = ''; S.abertas.clear();
   $('#lista').innerHTML = ''; $('#concluidasWrap').innerHTML = ''; $('#abas').innerHTML = '';
-  $('#busca').value = ''; $('#urlApi').value = '';
+  $('#busca').value = '';
   $('#modal').hidden = true;
   $('#modalRec').hidden = true;
   $('#app').hidden = true; $('#login').hidden = false;
   $('#loginErro').textContent = msg || '';
-  $('#urlApi').focus();
+  $('#senha').focus();
 }
 $('#btnBloquear').onclick = () => bloquear();
 
