@@ -385,7 +385,7 @@ body.privado .protegido:not(.revelado) .veu{display:flex;position:absolute;inset
 <script>
 /* ============================================================
    URL DO APPS SCRIPT
-   Fixa aqui no código (constante API_URL, logo abaixo) — nada fica guardado
+   Fixa aqui no código (constante API_URL_FIXA, logo abaixo) — nada fica guardado
    no navegador: nem essa URL, nem tarefa, categoria ou configuração.
    Tudo vive só na planilha (Sheets). Se um dia a implantação mudar de URL,
    troque o valor da constante e publique de novo.
@@ -420,16 +420,26 @@ body.privado .protegido:not(.revelado) .veu{display:flex;position:absolute;inset
    V1.8 (30/09/2026): etiqueta de categoria (na aba Prioritárias) ganha largura
    fixa, então o título de todas as tarefas passa a começar exatamente na
    mesma coluna, alinhado de cima a baixo.
+   V1.9 (30/09/2026): URL do Apps Script gravada no código (API_URL_FIXA) —
+   entra direto só com a senha, sem pedir URL. A tela Configurações continua
+   para colar outra URL (vale até fechar a página). Corrigido: bloquear o app
+   ou errar a senha apagava a URL da memória.
    ============================================================ */
-const VERSAO = 'V1.8';
+const VERSAO = 'V1.9';
 const VERSAO_DATA = '30/09/2026';
 document.querySelectorAll('[data-versao]').forEach(el => { el.textContent = VERSAO; el.title = 'Versão ' + VERSAO + ' — ' + VERSAO_DATA; });
 
-/* URL do Apps Script: colada na tela de login a cada acesso. Nada fica guardado
-   no navegador — nem essa URL, nem tarefa, categoria ou configuração. Tudo vive
-   só na planilha (Sheets). */
+/* URL do Apps Script: GRAVADA AQUI NO CÓDIGO (API_URL_FIXA). É o único lugar
+   onde ela pode ficar guardada sem usar o navegador (localStorage) — e não pode
+   ficar na planilha, porque é ela que leva até a planilha.
+   A tela "Configurações" permite colar outra URL, mas só vale enquanto a
+   página estiver aberta. Para trocar de vez: substitua o valor abaixo.
+   DICA: ao alterar o Code.gs, use Implantar > Gerenciar implantações > lápis >
+   Versão: "Nova versão" > Implantar. Assim a URL NÃO muda nunca.
+   ("Nova implantação" é que gera uma URL diferente.) */
+const API_URL_FIXA = 'https://script.google.com/macros/s/AKfycbxWMJTa3bJkqL7ALXt3o26l2v-saiJA4zP9n7P5VeameTxSv_fj3hezXmV6Y8oDC9n4Ww/exec';
 const RE_URL = /^https:\/\/script\.google(usercontent)?\.com\/.+\/exec$/;
-let API_URL = '';
+let API_URL = API_URL_FIXA;
 
 /* ---------------- Estado (só em memória) ---------------- */
 const PRIO = '__prio';
@@ -521,7 +531,8 @@ function substituir(r) {
 async function configurarUrl() {
   const ok = await modal({
     titulo: 'URL do Apps Script', ok: 'Salvar',
-    html: `<p class="mut" style="margin:0 0 4px">Cole aqui a URL da implantação do Apps Script (termina em <b>/exec</b>). Ela fica só nesta sessão — nada é gravado no navegador.</p>
+    html: `<p class="mut" style="margin:0 0 4px">A URL abaixo está <b>gravada no código do app</b> — você não precisa colar nada para entrar.</p>
+           <p class="mut" style="margin:0 0 4px">Só cole outra aqui se tiver criado uma <b>nova implantação</b> no Apps Script. Ela vale até fechar a página; para ficar definitiva, a URL nova precisa ir para o código (é só me mandar).</p>
            <label class="campo">URL<input id="mUrl" placeholder="https://script.google.com/macros/s/…/exec" value="${esc(API_URL)}"></label>`
   });
   if (!ok) return false;
@@ -555,7 +566,6 @@ $('#loginForm').addEventListener('submit', async e => {
     aplicarCarga(d);
     $('#novoTitulo').focus();
   } catch (err) {
-    API_URL = '';
     SENHA = null;
     $('#loginErro').textContent = err.message;
   } finally {
@@ -566,7 +576,6 @@ setTimeout(() => $('#senha').focus(), 50);
 
 function bloquear(msg) {
   SENHA = null;
-  API_URL = '';
   S.categorias = []; S.tarefas = []; S.recorrencias = []; S.busca = ''; S.abertas.clear();
   $('#lista').innerHTML = ''; $('#concluidasWrap').innerHTML = ''; $('#abas').innerHTML = '';
   $('#busca').value = '';
