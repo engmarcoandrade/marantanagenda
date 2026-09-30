@@ -117,6 +117,13 @@ main.conteudo{max-width:1100px;margin:0 auto;padding:22px 24px 80px}
 .chk-destaque:has(input:checked){background:var(--acc-soft);border-color:var(--acc);color:var(--txt)}
 .chk-destaque:has(input:checked) .ic{fill:var(--acc);stroke:var(--acc)}
 .chk-destaque:has(input:focus-visible){outline:3px solid var(--acc);outline-offset:2px}
+.destaque-chk{position:relative;cursor:pointer;padding:4px;flex:none;display:grid;place-items:center}
+.destaque-chk input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer;z-index:1}
+.bandeira{display:grid;place-items:center;border-radius:6px}
+.bandeira .ic{width:17px;height:17px;color:var(--mut);transition:transform .15s}
+.destaque-chk:hover .ic{transform:scale(1.15)}
+.destaque-chk input:checked + .bandeira .ic{fill:var(--acc);color:var(--acc);stroke:var(--acc)}
+.destaque-chk input:focus-visible + .bandeira{outline:3px solid var(--acc);outline-offset:2px}
 
 /* Painel da lista */
 .painel{background:var(--sup);border:1px solid var(--bor);border-radius:14px;padding:20px 24px 24px;margin-top:20px;box-shadow:var(--sombra)}
@@ -140,7 +147,7 @@ main.conteudo{max-width:1100px;margin:0 auto;padding:22px 24px 80px}
 #lista,#concluidasWrap{transition:filter .25s,opacity .25s}
 .lista-box{background:var(--sup);border:1px solid var(--bor);border-radius:10px;overflow:hidden}
 .lista-cab{display:flex;align-items:center;gap:10px;padding:10px 10px 10px 9px;background:var(--cab);border-bottom:1px solid var(--bor);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
-.lista-cab .c-estrela{width:27px;flex:none}
+.lista-cab .c-estrela{width:52px;flex:none}
 .lista-cab .c-tarefa{flex:1}
 .lista-cab .c-data{min-width:100px;text-align:right;flex:none}
 .card{display:flex;align-items:center;gap:10px;min-height:40px;padding:0 10px 0 6px;border-bottom:1px solid var(--bor);border-left:3px solid transparent;cursor:pointer;transition:background .12s}
@@ -405,9 +412,13 @@ body.privado .protegido:not(.revelado) .veu{display:flex;position:absolute;inset
    localStorage nem fixado no código: a URL fica só na memória da página
    enquanto ela estiver aberta e precisa ser colada de novo a cada vez que o
    app é aberto, igual aos outros apps.
+   V1.7 (30/09/2026): marcação de Destaque vira uma caixinha de seleção na
+   lateral esquerda de cada tarefa (igual à estrela de Prioritária), em vez do
+   ícone de bandeira dentro do título. Continua só realçando em negrito, sem
+   mover a tarefa de aba.
    ============================================================ */
-const VERSAO = 'V1.6';
-const VERSAO_DATA = '29/09/2026';
+const VERSAO = 'V1.7';
+const VERSAO_DATA = '30/09/2026';
 document.querySelectorAll('[data-versao]').forEach(el => { el.textContent = VERSAO; el.title = 'Versão ' + VERSAO + ' — ' + VERSAO_DATA; });
 
 /* URL do Apps Script: colada na tela de login a cada acesso. Nada fica guardado
@@ -649,11 +660,14 @@ function cardHTML(t) {
       <input type="checkbox" data-acao="prio" ${t.prioritaria ? 'checked' : ''} aria-label="Prioritária">
       <span class="estrela">${ic('star')}</span>
     </label>
+    <label class="destaque-chk" title="${t.destaque ? 'Remover destaque' : 'Marcar como destaque'}">
+      <input type="checkbox" data-acao="destaque" ${t.destaque ? 'checked' : ''} aria-label="Destaque">
+      <span class="bandeira">${ic('flag')}</span>
+    </label>
     ${S.aba === PRIO ? `<span class="tag tag-cat">${esc(nomeCat(t.categoriaId))}</span>` : ''}
-    <div class="card-linha">${t.destaque ? `<svg class="ic card-flag"><use href="#i-flag"/></svg>` : ''}<svg class="ic ic-done"><use href="#i-check"/></svg><span class="card-titulo">${esc(t.titulo)}</span>${desc ? `<span class="card-desc"> — ${esc(desc)}</span>` : ''}</div>
+    <div class="card-linha"><svg class="ic ic-done"><use href="#i-check"/></svg><span class="card-titulo">${esc(t.titulo)}</span>${desc ? `<span class="card-desc"> — ${esc(desc)}</span>` : ''}</div>
     <span class="card-data" title="${t.concluida ? 'Concluída ' : 'Lançada '}${esc(fmtRel(dataRef))}">${esc(fmtCurta(dataRef))}</span>
     <div class="card-acoes">
-      <button class="btn-acao" data-acao="destaque" type="button" title="${t.destaque ? 'Remover destaque' : 'Marcar como destaque'}" aria-label="${t.destaque ? 'Remover destaque' : 'Destaque'}">${ic('flag')}</button>
       <button class="btn-acao" data-acao="concluir" type="button" title="${t.concluida ? 'Reabrir tarefa' : 'Marcar como concluída'}" aria-label="${t.concluida ? 'Reabrir' : 'Concluir'}">${ic(t.concluida ? 'undo' : 'check')}</button>
       <button class="btn-acao" data-acao="editar" type="button" title="Editar" aria-label="Editar">${ic('edit')}</button>
       <button class="btn-acao acao-perigo" data-acao="excluir" type="button" title="Excluir" aria-label="Excluir">${ic('trash')}</button>
@@ -902,10 +916,10 @@ $('#protegido').addEventListener('click', e => {
   if (e.target.closest('#toggleDone')) { S.verConcluidas = !S.verConcluidas; renderLista(); return; }
   const card = e.target.closest('.card'); if (!card) return;
   const b = e.target.closest('[data-acao]');
-  if (!b) { if (!e.target.closest('.prio-chk')) alternarDetalhe(card.dataset.id); return; }
+  if (!b) { if (!e.target.closest('.prio-chk') && !e.target.closest('.destaque-chk')) alternarDetalhe(card.dataset.id); return; }
   const id = card.dataset.id, a = b.dataset.acao;
   if (a === 'prio') { e.preventDefault(); alternarPrio(id); }
-  else if (a === 'destaque') alternarDestaque(id);
+  else if (a === 'destaque') { e.preventDefault(); alternarDestaque(id); }
   else if (a === 'concluir') alternarConclusao(id);
   else if (a === 'editar') editarTarefa(id);
   else if (a === 'excluir') excluirTarefa(id);
