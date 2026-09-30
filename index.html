@@ -215,6 +215,7 @@ body.privado .protegido:not(.revelado) .veu{display:flex;position:absolute;inset
 .rec-info{flex:1;min-width:0}
 .rec-titulo{font-weight:600;font-size:14px;display:flex;align-items:center;gap:5px}
 .rec-titulo .ic{width:14px;height:14px;fill:var(--prio);stroke:var(--prio-dk)}
+.rec-titulo .ic-acc{fill:var(--acc)!important;stroke:var(--acc)!important}
 .rec-meta{font-size:12.5px;color:var(--mut);margin-top:2px}
 .rec-acoes{display:flex;gap:2px;flex:none}
 #toasts{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;z-index:60;align-items:center;width:calc(100% - 32px);max-width:420px}
@@ -318,6 +319,7 @@ body.privado .protegido:not(.revelado) .veu{display:flex;position:absolute;inset
         <select id="novaCat" aria-label="Categoria"></select>
         <button class="btn-det" id="btnDetalhe" type="button" aria-pressed="false" aria-controls="novaDesc" title="Mostrar campo de detalhes"><svg class="ic"><use href="#i-notes"/></svg><span>Detalhes</span><svg class="ic chev"><use href="#i-chev"/></svg></button>
         <label class="chk-prio"><input type="checkbox" id="novaPrio"><svg class="ic"><use href="#i-star"/></svg><span>Prioritária</span></label>
+        <label class="chk-destaque"><input type="checkbox" id="novaDestaque"><svg class="ic"><use href="#i-flag"/></svg><span>Destaque</span></label>
         <button class="btn btn-prim" type="submit"><svg class="ic"><use href="#i-plus"/></svg>Adicionar</button>
       </div>
       <textarea id="novaDesc" placeholder="Detalhes (opcional) — Ctrl+Enter adiciona" rows="1"></textarea>
@@ -393,9 +395,11 @@ body.privado .protegido:not(.revelado) .veu{display:flex;position:absolute;inset
    em lugar nenhum) — remove por completo o pedido de reconfiguração recorrente.
    V1.4 (23/09/2026): botão no topo para ver/copiar a URL fixa (só leitura, sem
    gravar nada no navegador) — como nos outros apps.
+   V1.5 (29/09/2026): marcação de "Destaque" nas tarefas — independente da
+   Prioritária, não move a tarefa de aba, só realça (negrito + bandeira azul).
    ============================================================ */
-const VERSAO = 'V1.4';
-const VERSAO_DATA = '23/09/2026';
+const VERSAO = 'V1.5';
+const VERSAO_DATA = '29/09/2026';
 document.querySelectorAll('[data-versao]').forEach(el => { el.textContent = VERSAO; el.title = 'Versão ' + VERSAO + ' — ' + VERSAO_DATA; });
 
 /* URL fixa da implantação do Apps Script — nada fica guardado no navegador
@@ -630,15 +634,16 @@ function cardHTML(t) {
   const desc = t.descricao.replace(/\s+/g, ' ');
   const dataRef = t.concluida ? t.concluidoEm : t.criadoEm;
   return `<div class="item ${aberto ? 'aberto' : ''}">
-  <div class="card ${t.prioritaria ? 'is-prio' : ''} ${t.concluida ? 'is-done' : ''}" data-id="${esc(t.id)}" tabindex="0" aria-expanded="${aberto}">
+  <div class="card ${t.prioritaria ? 'is-prio' : ''} ${t.destaque ? 'is-destaque' : ''} ${t.concluida ? 'is-done' : ''}" data-id="${esc(t.id)}" tabindex="0" aria-expanded="${aberto}">
     <label class="prio-chk" title="${t.prioritaria ? 'Desmarcar prioridade' : 'Marcar como prioritária'}">
       <input type="checkbox" data-acao="prio" ${t.prioritaria ? 'checked' : ''} aria-label="Prioritária">
       <span class="estrela">${ic('star')}</span>
     </label>
     ${S.aba === PRIO ? `<span class="tag tag-cat">${esc(nomeCat(t.categoriaId))}</span>` : ''}
-    <div class="card-linha"><svg class="ic ic-done"><use href="#i-check"/></svg><span class="card-titulo">${esc(t.titulo)}</span>${desc ? `<span class="card-desc"> — ${esc(desc)}</span>` : ''}</div>
+    <div class="card-linha">${t.destaque ? `<svg class="ic card-flag"><use href="#i-flag"/></svg>` : ''}<svg class="ic ic-done"><use href="#i-check"/></svg><span class="card-titulo">${esc(t.titulo)}</span>${desc ? `<span class="card-desc"> — ${esc(desc)}</span>` : ''}</div>
     <span class="card-data" title="${t.concluida ? 'Concluída ' : 'Lançada '}${esc(fmtRel(dataRef))}">${esc(fmtCurta(dataRef))}</span>
     <div class="card-acoes">
+      <button class="btn-acao" data-acao="destaque" type="button" title="${t.destaque ? 'Remover destaque' : 'Marcar como destaque'}" aria-label="${t.destaque ? 'Remover destaque' : 'Destaque'}">${ic('flag')}</button>
       <button class="btn-acao" data-acao="concluir" type="button" title="${t.concluida ? 'Reabrir tarefa' : 'Marcar como concluída'}" aria-label="${t.concluida ? 'Reabrir' : 'Concluir'}">${ic(t.concluida ? 'undo' : 'check')}</button>
       <button class="btn-acao" data-acao="editar" type="button" title="Editar" aria-label="Editar">${ic('edit')}</button>
       <button class="btn-acao acao-perigo" data-acao="excluir" type="button" title="Excluir" aria-label="Excluir">${ic('trash')}</button>
@@ -648,6 +653,7 @@ function cardHTML(t) {
     ${t.descricao ? `<div class="detalhe-desc">${esc(t.descricao)}</div>` : ''}
     <div class="detalhe-meta">
       ${t.prioritaria ? `<span class="tag tag-prio">${ic('star')}Prioritária</span>` : ''}
+      ${t.destaque ? `<span class="tag tag-destaque">${ic('flag')}Destaque</span>` : ''}
       <span class="tag">${esc(nomeCat(t.categoriaId))}</span>
       ${t.concluida ? `<span class="tag tag-done">${ic('check')}Concluída ${esc(fmtRel(t.concluidoEm))}</span>` : ''}
       <span>Lançada ${esc(fmtRel(t.criadoEm))}</span>
@@ -748,7 +754,7 @@ function renderRecorrencias() {
   $('#recLista').innerHTML = lst.length ? lst.map(r => `
     <div class="rec-item ${r.ativo ? '' : 'inativo'}">
       <div class="rec-info">
-        <div class="rec-titulo">${esc(r.titulo)}${r.prioritaria ? ic('star') : ''}</div>
+        <div class="rec-titulo">${esc(r.titulo)}${r.prioritaria ? ic('star') : ''}${r.destaque ? `<svg class="ic ic-acc"><use href="#i-flag"/></svg>` : ''}</div>
         <div class="rec-meta">${esc(freqTexto(r))} · ${esc(nomeCat(r.categoriaId))}${r.ativo ? '' : ' · pausada'}</div>
       </div>
       <div class="rec-acoes">
@@ -788,7 +794,10 @@ async function formRecorrencia(r) {
       </select></label>
     <label class="campo" id="rCampoSemana">Dia da semana<select id="rDiaSemana">${DIAS_SEMANA.map((n, i) => `<option value="${i}" ${r && r.diaSemana === i ? 'selected' : ''}>${n.charAt(0).toUpperCase() + n.slice(1)}</option>`).join('')}</select></label>
     <label class="campo" id="rCampoMes">Dia do mês (1 a 31)<input id="rDiaMes" type="number" min="1" max="31" value="${r ? r.diaMes : 1}"></label>
-    <label class="chk-prio" style="align-self:flex-start"><input type="checkbox" id="rPrio" ${r && r.prioritaria ? 'checked' : ''}>${ic('star')}<span>Prioritária</span></label>`;
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <label class="chk-prio" style="align-self:flex-start"><input type="checkbox" id="rPrio" ${r && r.prioritaria ? 'checked' : ''}>${ic('star')}<span>Prioritária</span></label>
+      <label class="chk-destaque" style="align-self:flex-start"><input type="checkbox" id="rDestaque" ${r && r.destaque ? 'checked' : ''}>${ic('flag')}<span>Destaque</span></label>
+    </div>`;
   const pOk = modal({ titulo: editando ? 'Editar recorrência' : 'Nova recorrência', ok: 'Salvar', html });
   atualizarCamposRec();
   $('#rTipo').addEventListener('change', atualizarCamposRec);
@@ -798,7 +807,7 @@ async function formRecorrencia(r) {
   const dados = {
     titulo: $('#rTitulo').value.trim(), descricao: $('#rDesc').value.trim(), categoriaId: $('#rCat').value,
     tipo: $('#rTipo').value, diaSemana: Number($('#rDiaSemana').value), diaMes: Number($('#rDiaMes').value),
-    prioritaria: $('#rPrio').checked
+    prioritaria: $('#rPrio').checked, destaque: $('#rDestaque').checked
   };
   if (!dados.titulo) {
     toast('Informe o título da recorrência.', 'erro');
@@ -864,10 +873,12 @@ function adicionarTarefa() {
   const categoriaId = $('#novaCat').value;
   if (!categoriaId) return toast('Crie uma categoria primeiro.', 'erro');
   const t = { id: novoId('t'), titulo, descricao: $('#novaDesc').value.trim(), categoriaId,
-    prioritaria: $('#novaPrio').checked, concluida: false, criadoEm: agoraLocal(), concluidoEm: '', atualizadoEm: '' };
+    prioritaria: $('#novaPrio').checked, destaque: $('#novaDestaque').checked,
+    concluida: false, criadoEm: agoraLocal(), concluidoEm: '', atualizadoEm: '' };
 
   $('#novoTitulo').value = ''; $('#novaDesc').value = ''; mostrarDetalhe(false); marcarDetalhe();
   $('#novaPrio').checked = S.aba === PRIO;
+  $('#novaDestaque').checked = false;
   $('#novoTitulo').focus();
 
   executar('addTarefa', t, () => S.tarefas.push(t), () => { S.tarefas = S.tarefas.filter(x => x.id !== t.id); })
@@ -884,6 +895,7 @@ $('#protegido').addEventListener('click', e => {
   if (!b) { if (!e.target.closest('.prio-chk')) alternarDetalhe(card.dataset.id); return; }
   const id = card.dataset.id, a = b.dataset.acao;
   if (a === 'prio') { e.preventDefault(); alternarPrio(id); }
+  else if (a === 'destaque') alternarDestaque(id);
   else if (a === 'concluir') alternarConclusao(id);
   else if (a === 'editar') editarTarefa(id);
   else if (a === 'excluir') excluirTarefa(id);
@@ -905,6 +917,13 @@ function alternarPrio(id) {
     .then(substituir).catch(() => {});
 }
 
+function alternarDestaque(id) {
+  const t = achar(id); if (!t) return;
+  const antes = t.destaque, v = !antes;
+  executar('definirDestaque', { id, valor: v }, () => { t.destaque = v; }, () => { t.destaque = antes; })
+    .then(substituir).catch(() => {});
+}
+
 function alternarConclusao(id, silencioso) {
   const t = achar(id); if (!t) return;
   const antes = { concluida: t.concluida, concluidoEm: t.concluidoEm }, v = !t.concluida;
@@ -922,12 +941,15 @@ async function editarTarefa(id) {
     <label class="campo">Título<input id="mTitulo" maxlength="300" value="${esc(t.titulo)}"></label>
     <label class="campo">Detalhes<textarea id="mDesc" rows="4">${esc(t.descricao)}</textarea></label>
     <label class="campo">Categoria<select id="mCat">${S.categorias.map(c => `<option value="${c.id}" ${c.id === t.categoriaId ? 'selected' : ''}>${esc(c.nome)}</option>`).join('')}</select></label>
-    <label class="chk-prio" style="align-self:flex-start"><input type="checkbox" id="mPrio" ${t.prioritaria ? 'checked' : ''}>${ic('star')}<span>Prioritária</span></label>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <label class="chk-prio" style="align-self:flex-start"><input type="checkbox" id="mPrio" ${t.prioritaria ? 'checked' : ''}>${ic('star')}<span>Prioritária</span></label>
+      <label class="chk-destaque" style="align-self:flex-start"><input type="checkbox" id="mDestaque" ${t.destaque ? 'checked' : ''}>${ic('flag')}<span>Destaque</span></label>
+    </div>
     <p class="mut" style="font-size:13px">Lançada ${esc(fmtRel(t.criadoEm))}</p>` });
   if (!ok) return;
-  const novo = { titulo: $('#mTitulo').value.trim(), descricao: $('#mDesc').value.trim(), categoriaId: $('#mCat').value, prioritaria: $('#mPrio').checked };
+  const novo = { titulo: $('#mTitulo').value.trim(), descricao: $('#mDesc').value.trim(), categoriaId: $('#mCat').value, prioritaria: $('#mPrio').checked, destaque: $('#mDestaque').checked };
   if (!novo.titulo) return toast('O título não pode ficar vazio.', 'erro');
-  const antes = { titulo: t.titulo, descricao: t.descricao, categoriaId: t.categoriaId, prioritaria: t.prioritaria };
+  const antes = { titulo: t.titulo, descricao: t.descricao, categoriaId: t.categoriaId, prioritaria: t.prioritaria, destaque: t.destaque };
   executar('editarTarefa', { id, ...novo }, () => Object.assign(t, novo), () => Object.assign(t, antes))
     .then(substituir).catch(() => {});
 }
