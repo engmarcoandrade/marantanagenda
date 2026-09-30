@@ -424,8 +424,9 @@ body.privado .protegido:not(.revelado) .veu{display:flex;position:absolute;inset
    entra direto só com a senha, sem pedir URL. A tela Configurações continua
    para colar outra URL (vale até fechar a página). Corrigido: bloquear o app
    ou errar a senha apagava a URL da memória.
+   V1.9.1 (30/09/2026): URL fixa atualizada para a nova implantação.
    ============================================================ */
-const VERSAO = 'V1.9';
+const VERSAO = 'V1.9.1';
 const VERSAO_DATA = '30/09/2026';
 document.querySelectorAll('[data-versao]').forEach(el => { el.textContent = VERSAO; el.title = 'Versão ' + VERSAO + ' — ' + VERSAO_DATA; });
 
@@ -437,7 +438,7 @@ document.querySelectorAll('[data-versao]').forEach(el => { el.textContent = VERS
    DICA: ao alterar o Code.gs, use Implantar > Gerenciar implantações > lápis >
    Versão: "Nova versão" > Implantar. Assim a URL NÃO muda nunca.
    ("Nova implantação" é que gera uma URL diferente.) */
-const API_URL_FIXA = 'https://script.google.com/macros/s/AKfycbxWMJTa3bJkqL7ALXt3o26l2v-saiJA4zP9n7P5VeameTxSv_fj3hezXmV6Y8oDC9n4Ww/exec';
+const API_URL_FIXA = 'https://script.google.com/macros/s/AKfycbyGLIFzyz2Wh2K3rxPRAm70KeEJyMNoBaESadhXVK219WoBT-cTTSj_vAtsOqQYpV6Drg/exec';
 const RE_URL = /^https:\/\/script\.google(usercontent)?\.com\/.+\/exec$/;
 let API_URL = API_URL_FIXA;
 
