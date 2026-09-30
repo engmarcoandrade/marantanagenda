@@ -111,6 +111,11 @@ main.conteudo{max-width:1100px;margin:0 auto;padding:22px 24px 80px}
 .chk-prio:has(input:checked){background:var(--prio-soft);border-color:var(--prio);color:var(--prio-txt)}
 .chk-prio:has(input:checked) .ic{fill:var(--prio);stroke:var(--prio-dk)}
 .chk-prio:has(input:focus-visible){outline:3px solid var(--acc);outline-offset:2px}
+.chk-destaque{position:relative;display:inline-flex;align-items:center;gap:6px;padding:9px 12px;border:1.5px solid var(--bor);border-radius:10px;cursor:pointer;font-weight:600;user-select:none;background:var(--sup)}
+.chk-destaque input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.chk-destaque:has(input:checked){background:var(--acc-soft);border-color:var(--acc);color:var(--txt)}
+.chk-destaque:has(input:checked) .ic{fill:var(--acc);stroke:var(--acc)}
+.chk-destaque:has(input:focus-visible){outline:3px solid var(--acc);outline-offset:2px}
 
 /* Painel da lista */
 .painel{background:var(--sup);border:1px solid var(--bor);border-radius:14px;padding:20px 24px 24px;margin-top:20px;box-shadow:var(--sombra)}
@@ -143,6 +148,7 @@ main.conteudo{max-width:1100px;margin:0 auto;padding:22px 24px 80px}
 .lista-box .item .card:hover{background:var(--hov);box-shadow:inset 0 -1px 0 var(--bor),0 1px 3px rgba(16,24,40,.08);position:relative;z-index:1}
 .card.is-prio{border-left-color:var(--prio)}
 .card.is-done .ic-done{display:inline-block}
+.card-flag{width:13px;height:13px;vertical-align:-2px;margin-right:3px;color:var(--acc);flex:none}
 @keyframes entra{from{opacity:0;transform:translateY(4px)}}
 .prio-chk{position:relative;cursor:pointer;padding:4px;flex:none;display:grid;place-items:center}
 .prio-chk input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer;z-index:1}
@@ -154,6 +160,7 @@ main.conteudo{max-width:1100px;margin:0 auto;padding:22px 24px 80px}
 .card-linha{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}
 .card-titulo{font-weight:400;color:var(--txt)}
 .card.is-prio .card-titulo{font-weight:700}
+.card.is-destaque .card-titulo{font-weight:800}
 .card.is-done .card-titulo{text-decoration:line-through;text-decoration-thickness:1.5px;font-weight:400;color:var(--mut)}
 .card-desc{color:var(--mut)}
 .ic-done{display:none;width:15px;height:15px;vertical-align:-2px;margin-right:4px;color:var(--acc);stroke-width:3}
@@ -161,6 +168,8 @@ main.conteudo{max-width:1100px;margin:0 auto;padding:22px 24px 80px}
 .tag .ic{width:12px;height:12px}
 .tag-prio{background:var(--prio-soft);border-color:var(--prio);color:var(--prio-txt)}
 .tag-prio .ic{fill:var(--prio);stroke:var(--prio-dk)}
+.tag-destaque{background:var(--acc-soft);border-color:var(--acc);color:var(--txt)}
+.tag-destaque .ic{fill:var(--acc);stroke:var(--acc)}
 .tag-done{background:var(--acc-soft);border-color:var(--acc);color:var(--txt)}
 .card-data{flex:none;font-size:12.5px;font-weight:600;color:var(--mut);min-width:100px;text-align:right}
 .card-acoes{display:none;gap:2px;flex:none}
@@ -226,8 +235,8 @@ body.privado .protegido:not(.revelado) .veu{display:flex;position:absolute;inset
   .nova{padding:10px}
   #novoTitulo{flex:1 1 100%}
   #novaCat{flex:1 1 0;min-width:0}
-  .chk-prio{flex:none;padding:9px 10px}
-  .chk-prio span,.btn-det span{display:none}
+  .chk-prio,.chk-destaque{flex:none;padding:9px 10px}
+  .chk-prio span,.chk-destaque span,.btn-det span{display:none}
   .btn-det{flex:none;padding:9px 10px}
   .nova-linha .btn{flex:none;padding:10px 14px}
   .busca,.barra-dir{flex:1 1 100%}
@@ -263,6 +272,7 @@ body.privado .protegido:not(.revelado) .veu{display:flex;position:absolute;inset
   <symbol id="i-arrR" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></symbol>
   <symbol id="i-repeat" viewBox="0 0 24 24"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></symbol>
   <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22V15"/></symbol>
 </svg>
 
 <!-- LOGIN -->
