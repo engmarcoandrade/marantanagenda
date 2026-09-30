@@ -174,6 +174,7 @@ main.conteudo{max-width:1100px;margin:0 auto;padding:22px 24px 80px}
 .ic-done{display:none;width:15px;height:15px;vertical-align:-2px;margin-right:4px;color:var(--acc);stroke-width:3}
 .tag{display:inline-flex;align-items:center;gap:4px;padding:1px 8px;border-radius:6px;background:var(--sup2);border:1px solid var(--bor);font-weight:600;font-size:12px;color:var(--mut);flex:none;white-space:nowrap}
 .tag .ic{width:12px;height:12px}
+.tag-cat{width:88px;flex:0 0 88px;justify-content:center;overflow:hidden;text-overflow:ellipsis}
 .tag-prio{background:var(--prio-soft);border-color:var(--prio);color:var(--prio-txt)}
 .tag-prio .ic{fill:var(--prio);stroke:var(--prio-dk)}
 .tag-destaque{background:var(--acc-soft);border-color:var(--acc);color:var(--txt)}
@@ -416,8 +417,11 @@ body.privado .protegido:not(.revelado) .veu{display:flex;position:absolute;inset
    lateral esquerda de cada tarefa (igual à estrela de Prioritária), em vez do
    ícone de bandeira dentro do título. Continua só realçando em negrito, sem
    mover a tarefa de aba.
+   V1.8 (30/09/2026): etiqueta de categoria (na aba Prioritárias) ganha largura
+   fixa, então o título de todas as tarefas passa a começar exatamente na
+   mesma coluna, alinhado de cima a baixo.
    ============================================================ */
-const VERSAO = 'V1.7';
+const VERSAO = 'V1.8';
 const VERSAO_DATA = '30/09/2026';
 document.querySelectorAll('[data-versao]').forEach(el => { el.textContent = VERSAO; el.title = 'Versão ' + VERSAO + ' — ' + VERSAO_DATA; });
 
