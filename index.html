@@ -425,9 +425,12 @@ body.privado .protegido:not(.revelado) .veu{display:flex;position:absolute;inset
    para colar outra URL (vale até fechar a página). Corrigido: bloquear o app
    ou errar a senha apagava a URL da memória.
    V1.9.1 (30/09/2026): URL fixa atualizada para a nova implantação.
+   V1.10 (01/10/2026): dentro de cada aba, as tarefas pendentes ficam na ordem
+   prioritárias → destaques → demais. Ao marcar a estrela ou a bandeira, a
+   tarefa sobe na hora para o topo.
    ============================================================ */
-const VERSAO = 'V1.9.1';
-const VERSAO_DATA = '30/09/2026';
+const VERSAO = 'V1.10';
+const VERSAO_DATA = '01/10/2026';
 document.querySelectorAll('[data-versao]').forEach(el => { el.textContent = VERSAO; el.title = 'Versão ' + VERSAO + ' — ' + VERSAO_DATA; });
 
 /* URL do Apps Script: GRAVADA AQUI NO CÓDIGO (API_URL_FIXA). É o único lugar
@@ -643,8 +646,11 @@ function renderLista() {
   let lst = tarefasDaAba(S.aba);
   if (q) lst = lst.filter(t => (t.titulo + ' ' + t.descricao).toLowerCase().includes(q));
 
+  /* Ordem das pendentes: 1º prioritárias, 2º destaques, depois o resto — cada grupo da mais nova para a mais antiga.
+     (Na aba Prioritárias todas são prioritárias, então lá os destaques sobem para o topo.) */
+  const peso = t => (t.prioritaria ? 2 : 0) + (t.destaque ? 1 : 0);
   const pend = lst.filter(t => !t.concluida).sort((a, b) =>
-    (S.aba !== PRIO && a.prioritaria !== b.prioritaria) ? (a.prioritaria ? -1 : 1) : String(b.criadoEm).localeCompare(String(a.criadoEm)));
+    (peso(b) - peso(a)) || String(b.criadoEm).localeCompare(String(a.criadoEm)));
   const feitas = lst.filter(t => t.concluida).sort((a, b) => String(b.concluidoEm).localeCompare(String(a.concluidoEm)));
 
   const cab = rot => `<div class="lista-cab"><span class="c-estrela"></span><span class="c-tarefa">Tarefa</span><span class="c-data">${rot}</span></div>`;
