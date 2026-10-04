@@ -458,8 +458,11 @@ body.privado .protegido:not(.revelado) .veu{display:flex;position:absolute;inset
    V1.11 (04/10/2026): ao cadastrar uma tarefa nova há a opção "Recorrente" (diária,
    semanal ou mensal), junto de Prioritária e Destaque. A tarefa é criada na hora
    e a recorrência passa a lançá-la nos próximos dias certos. Requer o Code.gs novo.
+   V1.12 (04/10/2026): nova aba "Todas", a primeira da lista, com as tarefas de todas as
+   categorias juntas (cada uma com a etiqueta da sua categoria). Mesma ordem das outras
+   abas: prioritárias, destaques e demais. Só HTML — Code.gs não muda.
    ============================================================ */
-const VERSAO = 'V1.11';
+const VERSAO = 'V1.12';
 const VERSAO_DATA = '04/10/2026';
 document.querySelectorAll('[data-versao]').forEach(el => { el.textContent = VERSAO; el.title = 'Versão ' + VERSAO + ' — ' + VERSAO_DATA; });
 
@@ -477,6 +480,7 @@ let API_URL = API_URL_FIXA;
 
 /* ---------------- Estado (só em memória) ---------------- */
 const PRIO = '__prio';
+const TODAS = '__todas'; /* aba que reúne todas as tarefas, de todas as categorias */
 let SENHA = null;
 const S = { categorias: [], tarefas: [], recorrencias: [], config: {}, aba: PRIO, busca: '', verConcluidas: false, privado: false, abertas: new Set() };
 const DIAS_SEMANA = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
@@ -629,20 +633,21 @@ function aplicarCarga(d) {
   aplicarTema(S.config.tema || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
   S.privado = S.config.privado === '1';
   aplicarPrivado();
-  if (S.aba !== PRIO && !S.categorias.some(c => c.id === S.aba)) S.aba = PRIO;
+  if (S.aba !== PRIO && S.aba !== TODAS && !S.categorias.some(c => c.id === S.aba)) S.aba = PRIO;
   render();
 }
 
 /* ---------------- Renderização ---------------- */
 function tarefasDaAba(aba) {
-  return S.tarefas.filter(t => aba === PRIO ? t.prioritaria : t.categoriaId === aba);
+  return S.tarefas.filter(t => aba === TODAS ? true : aba === PRIO ? t.prioritaria : t.categoriaId === aba);
 }
 
 function render() { renderAbas(); renderSelect(); renderCabecalho(); renderLista(); }
 
 function renderAbas() {
   const qt = aba => tarefasDaAba(aba).filter(t => !t.concluida).length;
-  let h = `<button class="aba aba-prio ${S.aba === PRIO ? 'ativa' : ''}" data-aba="${PRIO}" type="button">${ic('star')}Prioritárias<span class="qt">${qt(PRIO)}</span></button>`;
+  let h = `<button class="aba ${S.aba === TODAS ? 'ativa' : ''}" data-aba="${TODAS}" type="button">${ic('notes')}Todas<span class="qt">${qt(TODAS)}</span></button>`;
+  h += `<button class="aba aba-prio ${S.aba === PRIO ? 'ativa' : ''}" data-aba="${PRIO}" type="button">${ic('star')}Prioritárias<span class="qt">${qt(PRIO)}</span></button>`;
   S.categorias.forEach(c => {
     h += `<button class="aba ${S.aba === c.id ? 'ativa' : ''}" data-aba="${c.id}" type="button">${esc(c.nome)}<span class="qt">${qt(c.id)}</span></button>`;
   });
@@ -654,15 +659,15 @@ function renderSelect() {
   const sel = $('#novaCat'), atual = sel.value;
   sel.innerHTML = S.categorias.map(c => `<option value="${c.id}">${esc(c.nome)}</option>`).join('');
   if (S.categorias.some(c => c.id === atual)) sel.value = atual;
-  else if (S.aba !== PRIO) sel.value = S.aba;
+  else if (S.aba !== PRIO && S.aba !== TODAS) sel.value = S.aba;
 }
 
 function renderCabecalho() {
   const lst = tarefasDaAba(S.aba);
   const p = lst.filter(t => !t.concluida).length, c = lst.length - p;
-  $('#tituloAba').innerHTML = S.aba === PRIO ? `${ic('star')}Prioritárias` : esc(nomeCat(S.aba));
+  $('#tituloAba').innerHTML = S.aba === TODAS ? `${ic('notes')}Todas` : S.aba === PRIO ? `${ic('star')}Prioritárias` : esc(nomeCat(S.aba));
   $('#resumo').textContent = `${p} pendente${p !== 1 ? 's' : ''} · ${c} concluída${c !== 1 ? 's' : ''}`;
-  if (S.aba === PRIO) { $('#gerCat').innerHTML = ''; return; }
+  if (S.aba === PRIO || S.aba === TODAS) { $('#gerCat').innerHTML = ''; return; }
   const idx = S.categorias.findIndex(c2 => c2.id === S.aba);
   $('#gerCat').innerHTML =
     `<button class="btn-mini" data-cat="mover-esq" type="button" title="Mover aba para a esquerda" ${idx <= 0 ? 'disabled' : ''}>${ic('arrL')}</button>
@@ -686,6 +691,7 @@ function renderLista() {
   const cab = rot => `<div class="lista-cab"><span class="c-estrela"></span><span class="c-tarefa">Tarefa</span><span class="c-data">${rot}</span></div>`;
   $('#lista').innerHTML = pend.length ? `<div class="lista-box">${cab('Lançamento')}${pend.map(cardHTML).join('')}</div>` :
     `<div class="vazio">${q ? 'Nenhuma tarefa encontrada para essa busca.' :
+      S.aba === TODAS ? 'Nenhuma tarefa pendente. Use o campo acima para adicionar a primeira.' :
       S.aba === PRIO ? 'Nenhuma tarefa prioritária pendente. Marque a estrela de uma tarefa para ela aparecer aqui.' :
       'Nenhuma tarefa pendente nesta categoria.'}</div>`;
 
@@ -714,7 +720,7 @@ function cardHTML(t) {
       <input type="checkbox" data-acao="destaque" ${t.destaque ? 'checked' : ''} aria-label="Destaque">
       <span class="bandeira">${ic('flag')}</span>
     </label>
-    ${S.aba === PRIO ? `<span class="tag tag-cat">${esc(nomeCat(t.categoriaId))}</span>` : ''}
+    ${S.aba === PRIO || S.aba === TODAS ? `<span class="tag tag-cat">${esc(nomeCat(t.categoriaId))}</span>` : ''}
     <div class="card-linha"><svg class="ic ic-done"><use href="#i-check"/></svg><span class="card-titulo">${esc(t.titulo)}</span>${desc ? `<span class="card-desc"> — ${esc(desc)}</span>` : ''}</div>
     <span class="card-data" title="${t.concluida ? 'Concluída ' : 'Lançada '}${esc(fmtRel(dataRef))}">${esc(fmtCurta(dataRef))}</span>
     <div class="card-acoes">
@@ -741,7 +747,7 @@ $('#abas').addEventListener('click', e => {
   if (e.target.closest('#btnNovaCat')) return novaCategoria();
   const b = e.target.closest('[data-aba]'); if (!b) return;
   S.aba = b.dataset.aba;
-  if (S.aba !== PRIO) $('#novaCat').value = S.aba;
+  if (S.aba !== PRIO && S.aba !== TODAS) $('#novaCat').value = S.aba;
   $('#novaPrio').checked = S.aba === PRIO;
   render();
 });
@@ -995,7 +1001,7 @@ function adicionarTarefa() {
   executar('addTarefa', t, () => S.tarefas.push(t), () => { S.tarefas = S.tarefas.filter(x => x.id !== t.id); })
     .then(r => { substituir(r); return rec ? criarRecorrenciaDaTarefa(t, rec) : null; }).catch(() => {});
 
-  const visivel = S.aba === PRIO ? t.prioritaria : S.aba === categoriaId;
+  const visivel = S.aba === TODAS ? true : S.aba === PRIO ? t.prioritaria : S.aba === categoriaId;
   if (!visivel) toast(`Tarefa adicionada em "${nomeCat(categoriaId)}"${t.prioritaria ? ' (prioritária)' : ''}.`);
 }
 
