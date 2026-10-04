@@ -117,6 +117,16 @@ main.conteudo{max-width:1100px;margin:0 auto;padding:22px 24px 80px}
 .chk-destaque:has(input:checked){background:var(--acc-soft);border-color:var(--acc);color:var(--txt)}
 .chk-destaque:has(input:checked) .ic{fill:var(--acc);stroke:var(--acc)}
 .chk-destaque:has(input:focus-visible){outline:3px solid var(--acc);outline-offset:2px}
+.chk-recorrente{position:relative;display:inline-flex;align-items:center;gap:6px;padding:9px 12px;border:1.5px solid var(--bor);border-radius:10px;cursor:pointer;font-weight:600;user-select:none;background:var(--sup)}
+.chk-recorrente input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.chk-recorrente:has(input:checked){background:var(--acc-soft);border-color:var(--acc);color:var(--txt)}
+.chk-recorrente:has(input:checked) .ic{stroke:var(--acc)}
+.chk-recorrente:has(input:focus-visible){outline:3px solid var(--acc);outline-offset:2px}
+.nova-rec{display:flex;gap:10px 14px;flex-wrap:wrap;align-items:center;padding:10px 12px;border:1.5px dashed var(--acc);border-radius:10px;background:var(--acc-soft)}
+.nova-rec label{display:flex;align-items:center;gap:6px;font-weight:600;font-size:13px}
+.nova-rec select,.nova-rec input{padding:7px 10px}
+.nova-rec input[type=number]{width:80px}
+.nova-rec .nr-info{font-size:12.5px;color:var(--mut);flex:1 1 220px}
 .destaque-chk{position:relative;cursor:pointer;padding:4px;flex:none;display:grid;place-items:center}
 .destaque-chk input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer;z-index:1}
 .bandeira{display:grid;place-items:center;border-radius:6px}
@@ -245,8 +255,8 @@ body.privado .protegido:not(.revelado) .veu{display:flex;position:absolute;inset
   .nova{padding:10px}
   #novoTitulo{flex:1 1 100%}
   #novaCat{flex:1 1 0;min-width:0}
-  .chk-prio,.chk-destaque{flex:none;padding:9px 10px}
-  .chk-prio span,.chk-destaque span,.btn-det span{display:none}
+  .chk-prio,.chk-destaque,.chk-recorrente{flex:none;padding:9px 10px}
+  .chk-prio span,.chk-destaque span,.chk-recorrente span,.btn-det span{display:none}
   .btn-det{flex:none;padding:9px 10px}
   .nova-linha .btn{flex:none;padding:10px 14px}
   .busca,.barra-dir{flex:1 1 100%}
@@ -330,9 +340,26 @@ body.privado .protegido:not(.revelado) .veu{display:flex;position:absolute;inset
         <button class="btn-det" id="btnDetalhe" type="button" aria-pressed="false" aria-controls="novaDesc" title="Mostrar campo de detalhes"><svg class="ic"><use href="#i-notes"/></svg><span>Detalhes</span><svg class="ic chev"><use href="#i-chev"/></svg></button>
         <label class="chk-prio"><input type="checkbox" id="novaPrio"><svg class="ic"><use href="#i-star"/></svg><span>Prioritária</span></label>
         <label class="chk-destaque"><input type="checkbox" id="novaDestaque"><svg class="ic"><use href="#i-flag"/></svg><span>Destaque</span></label>
+        <label class="chk-recorrente" title="Repetir esta tarefa automaticamente"><input type="checkbox" id="novaRec"><svg class="ic"><use href="#i-repeat"/></svg><span>Recorrente</span></label>
         <button class="btn btn-prim" type="submit"><svg class="ic"><use href="#i-plus"/></svg>Adicionar</button>
       </div>
       <textarea id="novaDesc" placeholder="Detalhes (opcional) — Ctrl+Enter adiciona" rows="1"></textarea>
+      <div class="nova-rec" id="novaRecWrap" hidden>
+        <label>Repetir
+          <select id="nTipo" aria-label="Frequência">
+            <option value="diaria">Todos os dias</option>
+            <option value="semanal">Toda semana</option>
+            <option value="mensal">Todo mês</option>
+          </select>
+        </label>
+        <label id="nCampoSemana">Dia da semana
+          <select id="nDiaSemana"></select>
+        </label>
+        <label id="nCampoMes">Dia do mês
+          <input id="nDiaMes" type="number" min="1" max="31" value="1">
+        </label>
+        <span class="nr-info" id="nRecInfo"></span>
+      </div>
     </form>
 
     <section class="painel">
@@ -428,9 +455,12 @@ body.privado .protegido:not(.revelado) .veu{display:flex;position:absolute;inset
    V1.10 (01/10/2026): dentro de cada aba, as tarefas pendentes ficam na ordem
    prioritárias → destaques → demais. Ao marcar a estrela ou a bandeira, a
    tarefa sobe na hora para o topo.
+   V1.11 (04/10/2026): ao cadastrar uma tarefa nova há a opção "Recorrente" (diária,
+   semanal ou mensal), junto de Prioritária e Destaque. A tarefa é criada na hora
+   e a recorrência passa a lançá-la nos próximos dias certos. Requer o Code.gs novo.
    ============================================================ */
-const VERSAO = 'V1.10';
-const VERSAO_DATA = '01/10/2026';
+const VERSAO = 'V1.11';
+const VERSAO_DATA = '04/10/2026';
 document.querySelectorAll('[data-versao]').forEach(el => { el.textContent = VERSAO; el.title = 'Versão ' + VERSAO + ' — ' + VERSAO_DATA; });
 
 /* URL do Apps Script: GRAVADA AQUI NO CÓDIGO (API_URL_FIXA). É o único lugar
@@ -782,7 +812,7 @@ async function excluirCategoria() {
 /* ---------------- Tarefas recorrentes ---------------- */
 function freqTexto(r) {
   if (r.tipo === 'diaria') return 'Todos os dias';
-  if (r.tipo === 'semanal') return 'Toda ' + DIAS_SEMANA[r.diaSemana];
+  if (r.tipo === 'semanal') return (r.diaSemana === 0 || r.diaSemana === 6 ? 'Todo ' : 'Toda ') + DIAS_SEMANA[r.diaSemana];
   if (r.tipo === 'mensal') return 'Todo dia ' + r.diaMes;
   return '';
 }
@@ -911,6 +941,41 @@ $('#btnDetalhe').onclick = () => {
   if (abrir) $('#novaDesc').focus();
 };
 
+/* Recorrência ao cadastrar: marcando "Recorrente" aparece a frequência. A tarefa é criada agora
+   e a recorrência passa a lançá-la nos próximos dias certos (sem duplicar a de hoje). */
+$('#nDiaSemana').innerHTML = DIAS_SEMANA.map((n, i) => `<option value="${i}">${n.charAt(0).toUpperCase() + n.slice(1)}</option>`).join('');
+function padraoRecNova() {
+  const d = new Date();
+  $('#nTipo').value = 'semanal'; $('#nDiaSemana').value = String(d.getDay()); $('#nDiaMes').value = d.getDate();
+}
+function atualizarRecNova() {
+  const on = $('#novaRec').checked;
+  $('#novaRecWrap').hidden = !on;
+  if (!on) return;
+  const t = $('#nTipo').value;
+  $('#nCampoSemana').hidden = t !== 'semanal';
+  $('#nCampoMes').hidden = t !== 'mensal';
+  $('#nRecInfo').textContent = 'A tarefa é criada agora e se repete: ' + freqTexto(lerRecNova()).toLowerCase() + '.';
+}
+function lerRecNova() {
+  return { tipo: $('#nTipo').value, diaSemana: Number($('#nDiaSemana').value), diaMes: Math.min(31, Math.max(1, Number($('#nDiaMes').value) || 1)) };
+}
+padraoRecNova();
+$('#novaRec').addEventListener('change', atualizarRecNova);
+['#nTipo', '#nDiaSemana', '#nDiaMes'].forEach(id => $(id).addEventListener('input', atualizarRecNova));
+
+async function criarRecorrenciaDaTarefa(t, rec) {
+  const dados = { titulo: t.titulo, descricao: t.descricao, categoriaId: t.categoriaId, prioritaria: t.prioritaria, destaque: t.destaque,
+    tipo: rec.tipo, diaSemana: rec.diaSemana, diaMes: rec.diaMes, geradaHoje: true };
+  sync(+1);
+  try {
+    const novo = await api('addRecorrencia', dados);
+    S.recorrencias.push(novo);
+    sync(-1);
+    toast('Recorrência cadastrada: ' + freqTexto(novo).toLowerCase() + '.');
+  } catch (e) { sync(-1, true); toast('A tarefa foi criada, mas a recorrência não: ' + e.message, 'erro'); }
+}
+
 function adicionarTarefa() {
   const titulo = $('#novoTitulo').value.trim();
   if (!titulo) return $('#novoTitulo').focus();
@@ -923,10 +988,12 @@ function adicionarTarefa() {
   $('#novoTitulo').value = ''; $('#novaDesc').value = ''; mostrarDetalhe(false); marcarDetalhe();
   $('#novaPrio').checked = S.aba === PRIO;
   $('#novaDestaque').checked = false;
+  const rec = $('#novaRec').checked ? lerRecNova() : null;
+  $('#novaRec').checked = false; padraoRecNova(); atualizarRecNova();
   $('#novoTitulo').focus();
 
   executar('addTarefa', t, () => S.tarefas.push(t), () => { S.tarefas = S.tarefas.filter(x => x.id !== t.id); })
-    .then(substituir).catch(() => {});
+    .then(r => { substituir(r); return rec ? criarRecorrenciaDaTarefa(t, rec) : null; }).catch(() => {});
 
   const visivel = S.aba === PRIO ? t.prioritaria : S.aba === categoriaId;
   if (!visivel) toast(`Tarefa adicionada em "${nomeCat(categoriaId)}"${t.prioritaria ? ' (prioritária)' : ''}.`);
