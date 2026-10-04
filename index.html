@@ -98,7 +98,12 @@ main.conteudo{max-width:1100px;margin:0 auto;padding:22px 24px 80px}
 /* Nova tarefa */
 .nova{background:var(--sup);border:1px solid var(--bor);border-radius:var(--r);padding:14px;box-shadow:var(--sombra);display:flex;flex-direction:column;gap:10px}
 .nova-linha{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-#novoTitulo{flex:1 1 280px}
+#novoTitulo{width:100%;padding-right:48px}
+.campo-titulo{flex:1 1 280px;position:relative;display:flex}
+.btn-mic{position:absolute;right:5px;top:50%;transform:translateY(-50%);width:34px;height:34px;display:grid;place-items:center;border-radius:50%;border:none;background:none;color:var(--mut);transition:background .15s,color .15s}
+.btn-mic:hover{background:var(--acc-soft);color:var(--acc)}
+.btn-mic[aria-pressed="true"]{background:var(--acc);color:var(--acc-txt);animation:pulsa 1.2s ease-in-out infinite}
+@keyframes pulsa{50%{box-shadow:0 0 0 6px var(--acc-soft)}}
 .nova textarea{display:none;resize:vertical;min-height:70px}
 .nova.com-detalhe textarea{display:block}
 .btn-det{display:inline-flex;align-items:center;gap:6px;padding:9px 12px;border:1.5px solid var(--bor);border-radius:10px;font-weight:600;background:var(--sup)}
@@ -253,7 +258,7 @@ body.privado .protegido:not(.revelado) .veu{display:flex;position:absolute;inset
   .sync:empty{display:none}
   .btn-ic{width:38px;height:38px}
   .nova{padding:10px}
-  #novoTitulo{flex:1 1 100%}
+  .campo-titulo{flex:1 1 100%}
   #novaCat{flex:1 1 0;min-width:0}
   .chk-prio,.chk-destaque,.chk-recorrente{flex:none;padding:9px 10px}
   .chk-prio span,.chk-destaque span,.chk-recorrente span,.btn-det span{display:none}
@@ -292,6 +297,7 @@ body.privado .protegido:not(.revelado) .veu{display:flex;position:absolute;inset
   <symbol id="i-arrR" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></symbol>
   <symbol id="i-repeat" viewBox="0 0 24 24"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></symbol>
   <symbol id="i-flag" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22V15"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4M8 22h8"/></symbol>
   <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
 </svg>
 
@@ -335,7 +341,10 @@ body.privado .protegido:not(.revelado) .veu{display:flex;position:absolute;inset
   <main class="conteudo">
     <form class="nova" id="formNova">
       <div class="nova-linha">
-        <input id="novoTitulo" placeholder="Nova tarefa…  (atalho N)" maxlength="300" autocomplete="off" aria-label="Título da nova tarefa">
+        <div class="campo-titulo">
+          <input id="novoTitulo" placeholder="Nova tarefa…  (atalho N)" maxlength="300" autocomplete="off" aria-label="Título da nova tarefa">
+          <button class="btn-mic" id="btnMic" type="button" aria-pressed="false" title="Falar a tarefa (microfone)" aria-label="Falar a tarefa"><svg class="ic"><use href="#i-mic"/></svg></button>
+        </div>
         <select id="novaCat" aria-label="Categoria"></select>
         <button class="btn-det" id="btnDetalhe" type="button" aria-pressed="false" aria-controls="novaDesc" title="Mostrar campo de detalhes"><svg class="ic"><use href="#i-notes"/></svg><span>Detalhes</span><svg class="ic chev"><use href="#i-chev"/></svg></button>
         <label class="chk-prio"><input type="checkbox" id="novaPrio"><svg class="ic"><use href="#i-star"/></svg><span>Prioritária</span></label>
@@ -461,8 +470,10 @@ body.privado .protegido:not(.revelado) .veu{display:flex;position:absolute;inset
    V1.12 (04/10/2026): nova aba "Todas", a primeira da lista, com as tarefas de todas as
    categorias juntas (cada uma com a etiqueta da sua categoria). Mesma ordem das outras
    abas: prioritárias, destaques e demais. Só HTML — Code.gs não muda.
+   V1.13 (04/10/2026): botão de microfone no campo "Nova tarefa" — fale em vez de digitar;
+   o texto aparece no campo para conferir antes de Adicionar (Chrome/Edge). Só HTML.
    ============================================================ */
-const VERSAO = 'V1.12';
+const VERSAO = 'V1.13';
 const VERSAO_DATA = '04/10/2026';
 document.querySelectorAll('[data-versao]').forEach(el => { el.textContent = VERSAO; el.title = 'Versão ' + VERSAO + ' — ' + VERSAO_DATA; });
 
@@ -981,6 +992,52 @@ async function criarRecorrenciaDaTarefa(t, rec) {
     toast('Recorrência cadastrada: ' + freqTexto(novo).toLowerCase() + '.');
   } catch (e) { sync(-1, true); toast('A tarefa foi criada, mas a recorrência não: ' + e.message, 'erro'); }
 }
+
+/* ---------------- Ditado por voz ----------------
+   Usa o reconhecimento de voz do próprio navegador (Chrome / Edge). O texto vai para o campo do título
+   e você confere antes de clicar em Adicionar. Nada é gravado no navegador. */
+(function () {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const btn = $('#btnMic'), campo = $('#novoTitulo');
+  if (!SR) { btn.hidden = true; campo.style.paddingRight = ''; return; }
+  const placeholderOriginal = campo.placeholder;
+  let rec = null, base = '';
+  const juntar = (a, b) => (a && b ? a.replace(/\s+$/, '') + ' ' + b : a + b);
+  const maiuscula = t => t.charAt(0).toUpperCase() + t.slice(1);
+
+  function parou() {
+    rec = null;
+    btn.setAttribute('aria-pressed', 'false');
+    btn.title = 'Falar a tarefa (microfone)'; btn.setAttribute('aria-label', 'Falar a tarefa');
+    campo.placeholder = placeholderOriginal;
+    campo.value = campo.value.slice(0, 300);
+  }
+  function iniciar() {
+    rec = new SR();
+    rec.lang = 'pt-BR'; rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 1;
+    base = campo.value;
+    rec.onresult = e => {
+      let fala = '';
+      for (let i = 0; i < e.results.length; i++) fala += e.results[i][0].transcript;
+      const texto = juntar(base, fala.trim());
+      campo.value = base ? texto : maiuscula(texto);
+    };
+    rec.onerror = e => {
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') toast('Microfone bloqueado. Clique no cadeado ao lado do endereço do site e permita o microfone.', 'erro');
+      else if (e.error === 'no-speech') toast('Não ouvi nada. Clique no microfone e fale de novo.');
+      else if (e.error === 'network') toast('Sem conexão com o serviço de voz do navegador.', 'erro');
+      else if (e.error !== 'aborted') toast('Não consegui usar o microfone (' + e.error + ').', 'erro');
+    };
+    rec.onend = () => { parou(); campo.focus(); };
+    try {
+      rec.start();
+      btn.setAttribute('aria-pressed', 'true');
+      btn.title = 'Parar de ouvir'; btn.setAttribute('aria-label', 'Parar de ouvir');
+      campo.placeholder = 'Ouvindo… fale agora';
+    } catch (err) { parou(); toast('Não consegui iniciar o microfone.', 'erro'); }
+  }
+  btn.addEventListener('click', () => { if (rec) rec.stop(); else iniciar(); });
+})();
 
 function adicionarTarefa() {
   const titulo = $('#novoTitulo').value.trim();
